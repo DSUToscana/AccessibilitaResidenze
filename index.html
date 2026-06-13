@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestione Residenze - Filtro Città</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary-color: #3ecf8e;
+      --dark-color: #1c1c1c;
+      --bg-color: #f4f7f6;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background-color: var(--bg-color);
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: var(--dark-color);
+      border-bottom: 3px solid var(--primary-color);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* BARRA DI FILTRAGGIO */
+    .filter-bar {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .filter-bar label {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .filter-bar select {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+      min-width: 200px;
+      outline: none;
+    }
+
+    .filter-bar select:focus {
+      border-color: var(--primary-color);
+    }
+
+    /* GRID E CARD */
+    .residenze-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      border-top: 4px solid var(--primary-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-line {
+      margin: 8px 0;
+      font-size: 0.95em;
+    }
+
+    .info-line strong {
+      color: #555;
+    }
+
+    .scheda-box {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+      border: 1px solid #eaeaea;
+    }
+
+    .scheda-box h3 {
+      margin: 0 0 8px 0;
+      font-size: 1em;
+      color: #008060;
+    }
+
+    .btn-espandi {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      padding: 8px;
+      width: 100%;
+      border-radius: 4px;
+      background-color: #f0fdf4;
+      transition: background 0.2s;
+    }
+
+    .btn-espandi:hover {
+      background-color: #dcfce7;
+    }
+
+    .piani-container {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #ccc;
+    }
+
+    .piani-container.mostra {
+      display: block;
+    }
+
+    .tabella-piani {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.85em;
+    }
+
+    .tabella-piani th, .tabella-piani td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .tabella-piani th {
+      background-color: #eee;
+      color: #333;
+    }
+
+    .status-msg {
+      font-size: 1.2em;
+      text-align: center;
+      margin-top: 50px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Elenco Residenze</h1>
+
+    <div class="filter-bar">
+      <label for="filtro-citta">Filtra per Città:</label>
+      <select id="filtro-citta" onchange="applicaFiltro()">
+        <option value="tutte">Tutte le città</option>
+        </select>
+    </div>
+    
+    <div id="lista-residenze" class="residenze-grid">
+      <div class="status-msg">Inizializzazione in corso...</div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // CONFIG SUPABASE
+    // =========================
+
+    const SUPABASE_URL =
+      "https://hrqztgddqmwtljafqahn.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
+	  
+    const clientSupabase =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+    // Variabile globale per tenere in memoria tutte le residenze scaricate
+    let tutteLeResidenze = [];
+
+    // Funzione principale che coordina i caricamenti all'avvio
+    async function inizializzaPagina() {
+      await caricaMenuCitta();
+      await fetchResidenze();
+    }
+
+    // 2. FUNZIONE PER POPOLARE IL SELECT DELLE CITTÀ
+    async function caricaMenuCitta() {
+      try {
+        
+        const { data: citta, error } = await clientSupabase
+          .from('citta')
+          .select('id, citta')
+          .order('citta', { ascending: true });
+
+        if (error) throw error;
+
+        const select = document.getElementById('filtro-citta');
+        citta.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.innerText = c.citta;
+          select.appendChild(opt);
+        });
+
+      } catch (err) {
+        console.error("Errore nel caricamento delle città:", err.message);
+      }
+    }
+
+    // 3. RECUPERO DATI CON RELAZIONE CITTÀ INCLUSA
+    async function fetchResidenze() {
+      try {
+        const { data, error } = await clientSupabase
+          .from('residenze')
+          .select(`
+            id,
+            struttura,
+            indirizzo,
+            localita,
+            telefono,
+            id_citta,
+            citta ( citta ),
+            scheda_residenze (
+              *,
+              scheda_residenze_piani ( * )
+            )
+          `);
+
+        if (error) {
+          document.getElementById('lista-residenze').innerHTML = `<div class="status-msg" style="color: red;">Errore: ${error.message}</div>`;
+          return;
+        }
+
+        // Salviamo i dati nella variabile globale per poterli filtrare velocemente senza rifare query al DB
+        tutteLeResidenze = data;
+        
+        // Mostriamo inizialmente tutte le residenze
+        renderResidenze(tutteLeResidenze);
+
+      } catch (err) {
+        document.getElementById('lista-residenze').innerHTML = `<div class="status-msg" style="color: red;">Errore JS: ${err.message}</div>`;
+      }
+    }
+
+    // 4. FUNZIONE CHE FILTRA I DATI IN LOCALE
+    function applicaFiltro() {
+      const idCittaSelezionata = document.getElementById('filtro-citta').value;
+
+      if (idCittaSelezionata === "tutte") {
+        renderResidenze(tutteLeResidenze);
+      } else {
+        // Filtriamo l'array tenendo solo le residenze che hanno l'id_citta corrispondente
+        // Usiamo il casting String() o Number() a seconda di come gestisci gli ID (qui gestito come stringa/numero generico)
+        const datiFiltrati = tutteLeResidenze.filter(r => String(r.id_citta) === String(idCittaSelezionata));
+        renderResidenze(datiFiltrati);
+      }
+    }
+
+    // 5. FUNZIONE DI RENDERING DELLE CARD (Invariata, tranne per l'aggiunta del nome Città nel testo)
+    function renderResidenze(residenze) {
+      const container = document.getElementById('lista-residenze');
+      container.innerHTML = ''; 
+
+      if (!residenze || residenze.length === 0) {
+        container.innerHTML = '<div class="status-msg">Nessuna residenza trovata per i criteri selezionati.</div>';
+        return;
+      }
+
+      residenze.forEach(residenza => {
+        const scheda = Array.isArray(residenza.scheda_residenze) ? residenza.scheda_residenze[0] : residenza.scheda_residenze;
+        const piani = (scheda && scheda.scheda_residenze_piani) ? scheda.scheda_residenze_piani : [];
+
+        // Recuperiamo il nome della città risolto dalla JOIN
+        const nomeCitta = residenza.citta ? residenza.citta.citta : (residenza.localita || 'N/D');
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        let schedaHTML = '';
+        if (scheda) {
+          const formattaBooleano = (v) => v === true ? 'Sì' : (v === false ? 'No' : v || 'N/D');
+          schedaHTML = `
+            <div class="scheda-box">
+              <h3>Dati Scheda Generale</h3>
+              <div class="info-line"><strong>Piani dell'edificio:</strong> ${scheda.piani || 'N/D'}</div>
+              <div class="info-line"><strong>Ascensore:</strong> ${formattaBooleano(scheda.ascensore)}</div>
+              <div class="info-line"><strong>Rampa:</strong> ${formattaBooleano(scheda.rampa)}</div>
+            </div>
+          `;
+        }
+
+        let pianosHTML = '';
+        if (piani.length > 0) {
+          piani.sort((a, b) => a.piano - b.piano);
+          let righeTabella = '';
+          piani.forEach(p => {
+            righeTabella += `
+              <tr>
+                <td><strong>Piano ${p.piano}</strong></td>
+                <td>${p.accessibile || 'N/D'}</td>
+                <td>${p.num_camere ?? 0}</td>
+                <td>${p.num_camere_accessibili ?? 0}</td>
+                <td style="font-style:italic; color:#666;">${p.nota || '-'}</td>
+              </tr>
+            `;
+          });
+
+          pianosHTML = `
+            <button class="btn-espandi" onclick="togglePiani(this)">+ Vedi Dettaglio Piani (${piani.length})</button>
+            <div class="piani-container">
+              <table class="tabella-piani">
+                <thead>
+                  <tr>
+                    <th>Piano</th>
+                    <th>Access.</th>
+                    <th>Stanze Tot.</th>
+                    <th>Stanze Access.</th>
+                    <th>Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${righeTabella}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          pianosHTML = `<div class="info-line" style="color:#888; font-style:italic; margin-top:15px; text-align:center;">Nessun piano registrato</div>`;
+        }
+
+
+		// <div class="info-line"><strong>ID:</strong> #${residenza.id}</div>
+		
+        card.innerHTML = `
+          <h2 style="margin-top:0;">${residenza.struttura || 'Senza nome'}</h2>
+          <div class="info-line"><strong>Indirizzo:</strong> ${residenza.indirizzo || 'N/D'}</div>
+          <div class="info-line"><strong>Città / Località:</strong> ${nomeCitta}</div>
+		  <div class="info-line"><strong>Tel:</strong>
+				<a href="tel:${residenza.telefono || 'N/D'}" style="color: #0284c7; text-decoration: none;">${residenza.telefono || 'N/D'} 📞 </a></div>
+          ${schedaHTML}
+          ${pianosHTML}
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function togglePiani(bottone) {
+      const container = bottone.nextElementSibling;
+      const eAperto = container.classList.toggle('mostra');
+      if (eAperto) {
+        bottone.innerText = bottone.innerText.replace('+', '-').replace('Vedi', 'Nascondi');
+      } else {
+        bottone.innerText = bottone.innerText.replace('-', '+').replace('Nascondi', 'Vedi');
+      }
+    }
+
+    // Avvia tutto quanto
+    inizializzaPagina();
+  </script>
+</body>
+</html>

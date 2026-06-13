@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Accessibilità Residenza</title>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+
+<style>
+.phone-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+#callButton {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+#callButton:hover {
+  background-color: #218838;
+}
+</style>
+
+
+  <style>
+
+    body{
+      font-family:Arial;
+      background:#111827;
+      color:white;
+      padding:40px;
+    }
+
+    .box{
+      background:#1f2937;
+      padding:20px;
+      border-radius:12px;
+      width:300px;
+    }
+
+    select{
+      width:100%;
+      padding:12px;
+      border-radius:8px;
+      border:none;
+      margin-top:10px;
+    }
+
+	form{
+      width:100%;
+      padding:12px;
+      border-radius:8px;
+      border:none;
+      margin-top:10px;
+    }
+
+    #selected{
+      margin-top:20px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div id="welcomeMessage"></div>
+
+
+
+  <div class="box">
+
+    <h2>Ti trovi a:</h2>
+
+    <select id="citySelect">
+
+      <option value="">
+        Caricamento...
+      </option>
+
+    </select>
+	
+	
+	
+
+
+
+<h2>...nella residenza:</h2>
+<select id="residenzeSelect">
+
+  <option value="">
+    Seleziona una città prima
+  </option>
+
+</select>
+
+
+<div class="phone-box">
+  <span id="phoneNumber"></span>
+
+  <a id="callButton" href="#">
+    📞 Chiama
+  </a>
+</div>
+
+
+
+
+
+<form id="residenzaForm" style="display:none; margin-top:15px;">
+<h3>Dati della Residenza</h3>
+  <label>
+    Ascensore:
+    <input type="checkbox" id="ascensore">
+  </label>
+
+  <br>
+
+  <label>
+    Rampa:
+    <input type="checkbox" id="rampa">
+  </label>
+
+  <br>
+
+  <label>
+    Numero di Piani:
+    <input type="number" id="piani" min="1">
+  </label>
+
+  <br><br>
+
+  <button type="submit">
+    Salva dati Residenza & Piani
+  </button>
+
+<button id="generaPiani" type="button">
+  Genera
+</button>
+
+</form>
+
+
+
+<div id="containerPiani"></div>
+
+
+
+
+
+  </div>
+
+  <script>
+
+    // =========================
+    // CONFIG SUPABASE
+    // =========================
+
+    const SUPABASE_URL =
+      "https://hrqztgddqmwtljafqahn.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
+	  
+    const clientSupabase =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    // =========================
+    // CARICA CITTA
+    // =========================
+/* codice per console
+async function loadCities(){
+
+  const { data, error } =
+    await client.from("citta").select("*");
+
+  console.log("DATA:", data);
+  console.log("ERROR:", error);
+
+}
+*/
+
+
+
+async function showWelcomeMessage(){
+
+  // =========================
+  // UTENTE LOGGATO
+  // =========================
+
+  const {
+    data: { user }
+  } = await clientSupabase.auth.getUser();
+
+
+  // se non loggato
+  if(!user){
+
+    window.location.href = "/";
+
+    return;
+  }
+
+
+  // =========================
+  // CERCA OPERATORE
+  // =========================
+
+  const { data, error } =
+    await clientSupabase
+      .from("operatori")
+      .select("*")
+      .eq("mail", user.email)
+      .single();
+
+
+  console.log(data, error);
+
+
+  if(error){
+
+    console.log(error);
+
+    return;
+  }
+
+
+  // =========================
+  // DATA E ORA
+  // =========================
+
+  const now = new Date();
+
+  const giorno =
+    String(now.getDate()).padStart(2, '0');
+
+  const mese =
+    String(now.getMonth() + 1).padStart(2, '0');
+
+  const anno =
+    now.getFullYear();
+
+  const ore =
+    String(now.getHours()).padStart(2, '0');
+
+  const minuti =
+    String(now.getMinutes()).padStart(2, '0');
+
+
+  const dataFormattata =
+    `${giorno}/${mese}/${anno}`;
+
+  const oraFormattata =
+    `${ore}:${minuti}`;
+
+console.log(dataFormattata);
+console.log(oraFormattata);
+
+  // =========================
+  // MESSAGGIO
+  // =========================
+
+  document
+    .getElementById("welcomeMessage")
+    .innerHTML =
+
+    `
+      Ciao
+      <b>${data.cognome} ${data.nome}</b>,
+      oggi è il
+      <b>${dataFormattata}</b>
+      e sono le
+      <b>${oraFormattata}</b>
+    `;
+
+}
+
+
+
+
+
+
+    async function loadCities(){
+
+      const select =
+        document.getElementById("citySelect");
+
+      const { data, error } =
+        await clientSupabase
+          .from("citta")
+          .select("*")
+          .order("citta", {
+            ascending: true
+          });
+		  
+		if(error){
+
+        console.error(error);
+
+        select.innerHTML =
+          "<option>Errore caricamento</option>";
+
+        return;
+      }
+		      // svuota select
+      select.innerHTML =
+        '<option selected value="">-- Seleziona --</option>';
+
+
+      // aggiunge opzioni
+      data.forEach(city => {
+
+        const option =
+          document.createElement("option");
+
+        option.value = city.id;
+
+        option.textContent = city.citta;
+
+        select.appendChild(option);
+
+      });
+
+    }  
+		  
+		  
+	async function loadResidenze(cityId){
+
+  const residenzeSelect =
+    document.getElementById("residenzeSelect");
+
+  // reset
+  residenzeSelect.innerHTML =
+    '<option>Caricamento...</option>';
+
+  const { data, error } =
+    await clientSupabase
+      .from("residenze")
+      .select("*")
+      .eq("id_citta", cityId)
+      .order("struttura");
+
+  console.log(data, error);
+
+  if(error){
+
+    residenzeSelect.innerHTML =
+      '<option>Errore</option>';
+
+    return;
+  }
+
+  if(data.length === 0){
+
+    residenzeSelect.innerHTML =
+      '<option>Nessuna residenza</option>';
+
+    return;
+  }
+
+  residenzeSelect.innerHTML =
+    '<option selected value="">-- Seleziona residenza --</option>';
+
+  data.forEach(residence => {
+
+    const option =
+      document.createElement("option");
+
+    option.value = residence.id;
+
+    option.textContent =
+      residence.struttura;
+	  
+	  // telefono nascosto
+	option.dataset.phone =
+			residence.telefono;
+
+    residenzeSelect.appendChild(option);
+
+  });
+
+}	  
+
+
+
+
+
+
+
+    // =========================
+    // EVENTO SELEZIONE
+    // =========================
+
+    document
+      .getElementById("citySelect")
+      .addEventListener("change", function(){
+
+        const cityName =
+          this.options[this.selectedIndex].text;
+
+        //document.getElementById("selected").innerHTML = "Citta: " + cityName;
+
+		const cityId = this.value;
+
+		console.log("Città:", cityId);
+
+		if(cityId){
+		  loadResidenze(cityId);
+		  }
+      });
+	  
+	  
+	  document
+      .getElementById("residenzeSelect")
+      .addEventListener("change", function(){
+	  
+        const residenzaName =
+          this.options[this.selectedIndex].text;
+		  
+		const telefono =
+		  this.selectedOptions[0].dataset.phone;
+
+        //document.getElementById("selected").innerHTML += ", residenza: " + residenzaName;
+
+
+
+		document.getElementById("callButton").href = "tel:" + telefono;
+
+    document.getElementById("phoneNumber")
+            .textContent = telefono;	
+		
+
+const selected = this.selectedOptions[0];
+
+  idResidenzaSelezionata = selected.value;
+
+  // mostra form
+  // console.log("FORM:", form);
+console.log("RESIDENZA FORM:", residenzaForm);
+  
+  residenzaForm.style.display = "block";
+ // form.style.display = "block";
+
+		const residenzaId = this.value;
+		
+		console.log("Fine Residenza selezionata:", residenzaId);
+		if(residenzaId > 0){
+		  caricaEDisplayResidenza(residenzaId);
+		  }
+      });
+	  
+
+
+
+
+
+
+
+
+  document
+  .getElementById("residenzaForm")
+  .addEventListener("submit", async function (e) {
+
+    e.preventDefault();
+
+const numPiani =
+      parseInt(document.getElementById("piani").value);
+
+	if (!numPiani || numPiani <= 0) {
+		alert("Specificare il numero dei piani!");
+		return
+	};
+
+    const payload = {
+      id_residenza: idResidenzaSelezionata,
+      ascensore: document.getElementById("ascensore").checked,
+      rampa: document.getElementById("rampa").checked,
+      piani: document.getElementById("piani").value
+    };
+
+    let result;
+
+result = await clientSupabase
+  .from("scheda_residenze")
+  .upsert(payload, { onConflict: "id_residenza" });
+  
+
+    const { error } = result;
+
+    if (error) {
+      console.error();
+      alert("ATTENZIONE!! Errore salvataggio");
+	  //resetForm(this);
+      return;
+    }
+	
+	
+	// *********   da qui salvo i piani
+	for (let piano = 1; piano <= numPiani; piano++) {
+	alert ("Salvo il piano  " + piano);
+	//alert(`stanze_${piano}`);
+	//alert(document.getElementsByName(`stanze_${piano}`)[0].value);
+
+	
+	
+	// Seleziona direttamente l'elemento select tramite il name
+	const selectAccessibile = document.querySelector(`select[name="accessibilita_${piano}"]`);
+	const inputStanze = document.querySelector(`input[name="stanze_${piano}"]`);
+	const inputStanzeAcc = document.querySelector(`input[name="stanzeAccessibili_${piano}"]`);
+	const inputNote = document.querySelector(`input[name="note_${piano}"]`);
+
+	const payloadPiano = {
+	  id: 1,
+	  id_residenza: idResidenzaSelezionata,
+	  
+	  // Il punto di domanda (?) evita il crash se la select non viene trovata
+	  accessibile: selectAccessibile ? selectAccessibile.value : "",
+	  
+	  // Convertiamo in numeri per evitare che il server riceva stringhe (es. "3")
+	  num_camere: inputStanze ? parseInt(inputStanze.value, 10) || 0 : 0,
+	  num_camere_accessibili: inputStanzeAcc ? parseInt(inputStanzeAcc.value, 10) || 0 : 0,
+	  
+	  nota: inputNote ? inputNote.value : ""
+	};
+
+	
+    let result;
+
+		result = await clientSupabase
+		  .from("scheda_residenze_piani")
+		  .upsert(payloadPiano, { onConflict: "id" });
+  
+
+    const { error } = result;
+
+    if (error) {
+      console.error();
+      alert("ATTENZIONE!! Errore salvataggio");
+	  alert(error);
+	  //resetForm(this);
+      return;
+    }
+	
+	
+	
+	
+	}
+	// a qui salvo i piani
+	
+
+    alert("Scheda salvata con successo 👍");
+
+    // ora faccio il reset della form
+	resetForm(this);
+  });
+
+
+
+
+document
+  .getElementById("generaPiani")
+  .addEventListener("click", function () {
+
+    const numPiani =
+      parseInt(document.getElementById("piani").value);
+
+	if (!numPiani || numPiani <= 0) return;
+	
+    const container =
+      document.getElementById("containerPiani");
+
+    container.innerHTML = ""; // reset
+
+    
+
+    for (let i = 1; i <= numPiani; i++) {
+
+      const div = document.createElement("div");
+      div.className = "piano-box";
+	  div.style="background-color: red;"
+
+      div.innerHTML = `
+        <h4>Piano ${i}</h4>
+  <br>
+
+        <label>
+          Accessibilità piano:
+          <select id="accessibilita_${i}"   name="accessibilita_${i}">
+            <option value="ok">SI</option>
+            <option value="parziale">Parziale</option>
+            <option value="no">...no</option>
+          </select>
+        </label>
+
+
+<br>
+  <label>
+    Numero di Stanze:
+    <input type="number" id="stanze_${i}" name="stanze_${i}"   min="1">
+  </label>
+<br>
+  <label>
+    ...di cui accessibili:
+    <input type="number" id="numero" id="stanzeAccessibili_${i}" name="stanzeAccessibili_${i}"  min="1">
+	<button onclick="creaDiv()">Inserisco dettagli....</button>
+  </label>
+
+  <div id="contenitore"></div>
+
+        <br>
+
+        <label>
+          Note:
+          <input type="text" id="note_${i}"  name="note_${i}">
+        </label>
+
+        <hr>
+      `;
+
+      container.appendChild(div);
+    }
+});
+
+
+
+	function resetForm(form){
+	
+	 form.reset();
+	 setTimeout(() => {
+			 const dropcitta = document.getElementById("citySelect").selectedIndex = 0;
+			 const dropresidenze = document.getElementById("residenzeSelect").innerHTML = "Seleziona una città prima";
+			 document.getElementById("phoneNumber").textContent = "...";
+			}, 0);
+	}
+	
+	
+	
+	function creaDivPiani(){
+	const numPiani =
+      parseInt(document.getElementById("piani").value);
+
+	if (!numPiani || numPiani <= 0) return;
+	
+    const container =
+      document.getElementById("containerPiani");
+
+    container.innerHTML = ""; // reset
+
+    
+
+    for (let i = 1; i <= numPiani; i++) {
+
+      const div = document.createElement("div");
+      div.className = "piano-box";
+	  div.style="background-color: red;"
+
+      div.innerHTML = `
+        <h4>Piano ${i}</h4>
+  <br>
+
+        <label>
+          Accessibilità piano:
+          <select name="accessibilita_${i}">
+            <option value="ok">SI</option>
+            <option value="parziale">Parziale</option>
+            <option value="no">...no</option>
+          </select>
+        </label>
+
+
+<br>
+  <label>
+    Numero di Stanze:
+    <input type="number" name="stanze_${i}" min="1">
+  </label>
+<br>
+  <label>
+    ...di cui accessibili:
+    <input type="number" id="numero" name="stanzeAccessibili_${i}" min="1">
+	<button onclick="creaDiv()">Inserisco dettagli....</button>
+  </label>
+
+  <div id="contenitore"></div>
+
+        <br>
+
+        <label>
+          Note:
+          <input type="text" name="note_${i}">
+        </label>
+
+        <hr>
+      `;
+
+      container.appendChild(div);
+    }
+	}
+
+
+ 
+    function creaDiv() {
+      const numero = document.getElementById("numero").value;
+      const contenitore = document.getElementById("contenitore");
+
+      // pulisce i div precedenti
+      contenitore.innerHTML = "";
+
+      for (let i = 1; i <= numero; i++) {
+        const nuovoDiv = document.createElement("div");
+        nuovoDiv.className = "box";
+        nuovoDiv.textContent = "Dimensioni bagno stanza " + i;
+
+        contenitore.appendChild(nuovoDiv);
+      }
+    }
+
+async function caricaEDisplayResidenza(idResidenza) {
+		//async function caricaEDisplayResidenza(idResidenza) {
+	
+		  // 1. Recuperi il dato da Supabase
+		  const { data, error } = await clientSupabase
+			.from("scheda_residenze")
+			.select("*")
+			.eq("id_residenza", idResidenza)
+			.maybeSingle(); //.single(); // .single() serve a farsi restituire un oggetto singolo invece di un array
+
+		  if (error) {
+			console.error("Errore nel recupero dati:", error.message);
+			alert(error.message);
+			return;
+		  }
+
+
+		const divPiani = document.getElementById('containerPiani');
+		divPiani.replaceChildren(); // Svuota istantaneamente il div
+
+
+
+		  if (data) {
+			// 2. Popoli i campi di testo della form
+			document.getElementById("ascensore").checked = data.ascensore;
+			document.getElementById("rampa").checked = data.rampa;
+			document.getElementById("piani").value = data.piani;
+
+			creaDivPiani();
+	
+			// 3. Popoli la drop-list (select)
+			// Basta assegnare il valore al .value della select: 
+			// il browser selezionerà automaticamente l'option con quel value.
+			//const selectCategoria = document.getElementById("select_categoria");
+			//selectCategoria.value = data.categoria; 
+		  }else{
+			document.getElementById("ascensore").checked = false;
+			document.getElementById("rampa").checked = false;
+			document.getElementById("piani").value = 1;
+		  }
+	}
+
+
+    // avvio
+	showWelcomeMessage();
+    loadCities();
+
+  </script>
+
+</body>
+</html>

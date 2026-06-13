@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accedi al Servizio</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        .campo { margin-bottom: 16px; }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background-color: #2563eb;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2 style="text-align: center; margin-top: 0;">Accedi alla Form</h2>
+        <form id="formLogin">
+            <div class="campo">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required>
+            </div>
+            <div class="campo">
+                <label>Password</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit">Accedi</button>
+        </form>
+    </div>
+
+    <!-- URL CDN COMPLETO E CORRETTO -->
+    <script type="module">
+        import { createClient } from 'jsdelivr.net'
+
+        const SUPABASE_URL = "https://hrqztgddqmwtljafqahn.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
+
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Se l'utente ha già una sessione attiva, lo sposta subito su form.html
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                window.location.href = "form.html";
+            }
+        } catch (e) {
+            console.error("Errore sessione:", e);
+        }
+
+        // Gestione dell'invio del Login
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Impedisce il refresh della pagina
+            
+            const emailValue = document.getElementById('loginEmail').value.trim();
+            const passwordValue = document.getElementById('loginPassword').value;
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ 
+                    email: emailValue, 
+                    password: passwordValue 
+                });
+
+                if (error) {
+                    alert("Errore di accesso: " + error.message);
+                } else {
+                    alert("Accesso eseguito!");
+                    window.location.href = "form.html";
+                }
+            } catch (err) {
+                alert("Errore imprevisto: " + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

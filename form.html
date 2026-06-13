@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inserimento Dati</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        .campo { margin-bottom: 16px; }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+        }
+        .btn-green { background-color: #16a34a; }
+        .header-form {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .btn-logout {
+            background: none;
+            color: #dc2626;
+            width: auto;
+            padding: 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="header-form">
+            <h2 style="margin: 0;">Inserisci Dati</h2>
+            <button id="btnLogout" class="btn-logout">Esci</button>
+        </div>
+        <form id="mioForm">
+            <div class="campo">
+                <label>Nome</label>
+                <input type="text" id="nome" required>
+            </div>
+            <div class="campo">
+                <label>Messaggio</label>
+                <textarea id="messaggio" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn-green">Invia Dati</button>
+        </form>
+    </div>
+
+    <!-- URL CDN COMPLETO E CORRETTO -->
+    <script type="module">
+        import { createClient } from 'jsdelivr.net'
+
+        const SUPABASE_URL = "supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
+
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // CONTROLLO DI SICUREZZA: Se non è loggato, lo rispedisce al login
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = "index.html";
+            }
+        } catch (e) {
+            window.location.href = "index.html";
+        }
+
+        // Gestione Invio Dati
+        document.getElementById('mioForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const valoreNome = document.getElementById('nome').value;
+            const valoreMessaggio = document.getElementById('messaggio').value;
+
+            const { data, error } = await supabaseClient
+                .from('contatti') 
+                .insert([{ nome: valoreNome, messaggio: valoreMessaggio }]);
+
+            if (error) {
+                alert("Errore nel salvataggio: " + error.message);
+            } else {
+                alert("Dati salvati con successo!");
+                document.getElementById('mioForm').reset();
+            }
+        });
+
+        // Gestione Logout
+        document.getElementById('btnLogout').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = "index.html";
+        });
+    </script>
+</body>
+</html>
