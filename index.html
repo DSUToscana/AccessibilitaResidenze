@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestione Residenze - Filtro Città</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.dataTables.min.css">
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+  
   <style>
     :root {
       --primary-color: #3ecf8e;
@@ -21,8 +33,9 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 100%; /* Allargato per ospitare la tabellona */
       margin: 0 auto;
+      padding: 0 10px;
     }
 
     h1 {
@@ -159,6 +172,21 @@
       margin-top: 50px;
       color: #666;
     }
+  
+    #btnVistaCompleta,#btnVistaNormale{
+      padding:8px 14px;border:none;border-radius:4px;cursor:pointer;
+      background:#3ecf8e;color:white;font-weight:bold;
+    }
+    
+    .dataTables_wrapper{
+      width:100%;
+      margin-top: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .dt-buttons{margin-bottom:15px;}
   </style>
 </head>
 <body>
@@ -170,7 +198,10 @@
       <label for="filtro-citta">Filtra per Città:</label>
       <select id="filtro-citta" onchange="applicaFiltro()">
         <option value="tutte">Tutte le città</option>
-        </select>
+      </select>
+
+      <button id="btnVistaCompleta" onclick="mostraVistaCompleta()">📊 Lista</button>
+      <button id="btnVistaNormale" onclick="ripristinaVistaNormale()" style="display:none;">↩️ Card</button>
     </div>
     
     <div id="lista-residenze" class="residenze-grid">
@@ -182,18 +213,10 @@
     // =========================
     // CONFIG SUPABASE
     // =========================
-
-    const SUPABASE_URL =
-      "https://hrqztgddqmwtljafqahn.supabase.co";
-
-    const SUPABASE_KEY =
-      "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
-	  
-    const clientSupabase =
-      supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
+    const SUPABASE_URL = "https://hrqztgddqmwtljafqahn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
+      
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Variabile globale per tenere in memoria tutte le residenze scaricate
     let tutteLeResidenze = [];
@@ -207,7 +230,6 @@
     // 2. FUNZIONE PER POPOLARE IL SELECT DELLE CITTÀ
     async function caricaMenuCitta() {
       try {
-        
         const { data: citta, error } = await clientSupabase
           .from('citta')
           .select('id, citta')
@@ -252,10 +274,7 @@
           return;
         }
 
-        // Salviamo i dati nella variabile globale per poterli filtrare velocemente senza rifare query al DB
         tutteLeResidenze = data;
-        
-        // Mostriamo inizialmente tutte le residenze
         renderResidenze(tutteLeResidenze);
 
       } catch (err) {
@@ -266,18 +285,22 @@
     // 4. FUNZIONE CHE FILTRA I DATI IN LOCALE
     function applicaFiltro() {
       const idCittaSelezionata = document.getElementById('filtro-citta').value;
+      const inVistaTabella = document.getElementById('btnVistaNormale').style.display === 'inline-block';
 
-      if (idCittaSelezionata === "tutte") {
-        renderResidenze(tutteLeResidenze);
+      // Filtriamo l'array in base alla città
+      const datiFiltrati = idCittaSelezionata === "tutte" 
+        ? tutteLeResidenze 
+        : tutteLeResidenze.filter(r => String(r.id_citta) === String(idCittaSelezionata));
+
+      // Se siamo in vista tabella, aggiorniamo la tabella completa dinamica
+      if (inVistaTabella) {
+        renderTabellaCompleta(datiFiltrati);
       } else {
-        // Filtriamo l'array tenendo solo le residenze che hanno l'id_citta corrispondente
-        // Usiamo il casting String() o Number() a seconda di come gestisci gli ID (qui gestito come stringa/numero generico)
-        const datiFiltrati = tutteLeResidenze.filter(r => String(r.id_citta) === String(idCittaSelezionata));
         renderResidenze(datiFiltrati);
       }
     }
 
-    // 5. FUNZIONE DI RENDERING DELLE CARD (Invariata, tranne per l'aggiunta del nome Città nel testo)
+    // 5. FUNZIONE DI RENDERING DELLE CARD
     function renderResidenze(residenze) {
       const container = document.getElementById('lista-residenze');
       container.innerHTML = ''; 
@@ -289,9 +312,7 @@
 
       residenze.forEach(residenza => {
         const scheda = Array.isArray(residenza.scheda_residenze) ? residenza.scheda_residenze[0] : residenza.scheda_residenze;
-        const piani = (scheda && scheda.scheda_residenze_piani) ? scheda.scheda_residenze_piani : [];
-
-        // Recuperiamo il nome della città risolto dalla JOIN
+        const pianos = (scheda && scheda.scheda_residenze_piani) ? scheda.scheda_residenze_piani : [];
         const nomeCitta = residenza.citta ? residenza.citta.citta : (residenza.localita || 'N/D');
 
         const card = document.createElement('div');
@@ -311,10 +332,10 @@
         }
 
         let pianosHTML = '';
-        if (piani.length > 0) {
-          piani.sort((a, b) => a.piano - b.piano);
+        if (pianos.length > 0) {
+          pianos.sort((a, b) => a.piano - b.piano);
           let righeTabella = '';
-          piani.forEach(p => {
+          pianos.forEach(p => {
             righeTabella += `
               <tr>
                 <td><strong>Piano ${p.piano}</strong></td>
@@ -327,7 +348,7 @@
           });
 
           pianosHTML = `
-            <button class="btn-espandi" onclick="togglePiani(this)">+ Vedi Dettaglio Piani (${piani.length})</button>
+            <button class="btn-espandi" onclick="togglePiani(this)">+ Vedi Dettaglio Piani (${pianos.length})</button>
             <div class="piani-container">
               <table class="tabella-piani">
                 <thead>
@@ -349,15 +370,12 @@
           pianosHTML = `<div class="info-line" style="color:#888; font-style:italic; margin-top:15px; text-align:center;">Nessun piano registrato</div>`;
         }
 
-
-		// <div class="info-line"><strong>ID:</strong> #${residenza.id}</div>
-		
         card.innerHTML = `
           <h2 style="margin-top:0;">${residenza.struttura || 'Senza nome'}</h2>
           <div class="info-line"><strong>Indirizzo:</strong> ${residenza.indirizzo || 'N/D'}</div>
           <div class="info-line"><strong>Città / Località:</strong> ${nomeCitta}</div>
-		  <div class="info-line"><strong>Tel:</strong>
-				<a href="tel:${residenza.telefono || 'N/D'}" style="color: #0284c7; text-decoration: none;">${residenza.telefono || 'N/D'} 📞 </a></div>
+          <div class="info-line"><strong>Tel:</strong>
+          <a href="tel:${residenza.telefono || 'N/D'}" style="color: #0284c7; text-decoration: none;">${residenza.telefono || 'N/D'} 📞 </a></div>
           ${schedaHTML}
           ${pianosHTML}
         `;
@@ -374,6 +392,182 @@
       } else {
         bottone.innerText = bottone.innerText.replace('-', '+').replace('Nascondi', 'Vedi');
       }
+    }
+
+    // questa funzione attiva la super-tabella dinamica con tutti i campi
+    function mostraVistaCompleta() {
+      document.getElementById('btnVistaCompleta').style.display = 'none';
+      document.getElementById('btnVistaNormale').style.display = 'inline-block';
+      
+      const contenitore = document.getElementById('lista-residenze');
+      contenitore.classList.remove('residenze-grid');
+      
+      // Calcola i dati filtrati attuali e renderizza la mega tabella
+      const idCittaSelezionata = document.getElementById('filtro-citta').value;
+      const datiDaMostrare = idCittaSelezionata === "tutte" 
+        ? tutteLeResidenze 
+        : tutteLeResidenze.filter(r => String(r.id_citta) === String(idCittaSelezionata));
+        
+      renderTabellaCompleta(datiDaMostrare);
+    }
+
+    function ripristinaVistaNormale() {
+      document.getElementById('btnVistaCompleta').style.display = 'inline-block';
+      document.getElementById('btnVistaNormale').style.display = 'none';
+      
+      const contenitore = document.getElementById('lista-residenze');
+      contenitore.classList.add('residenze-grid');
+      
+      applicaFiltro();
+    }
+
+    // FUNZIONI DI APPIATTIMENTO E RENDERING DELLA SUPER TABELLA (Invariate e collegate)
+    function appiattisciOggetto(obj, prefisso=''){
+      let r={};
+      for(const k in obj){
+        const v=obj[k];
+        const nk=prefisso?`${prefisso}_${k}`:k;
+        if(v && typeof v==='object' && !Array.isArray(v)){
+           Object.assign(r, appiattisciOggetto(v,nk));
+        } else {
+           r[nk]=v;
+        }
+      }
+      return r;
+    }
+
+
+
+
+
+
+function renderTabellaCompleta(residenze){
+  const righe=[];
+
+  residenze.forEach(x=>{
+    const r={
+       id:x.id,
+       struttura:x.struttura,
+       indirizzo:x.indirizzo,
+       localita:x.localita,
+       telefono:x.telefono,
+       citta:x.citta?.citta || ''
+    };
+
+    const scheda=Array.isArray(x.scheda_residenze)
+       ? x.scheda_residenze[0]
+       : x.scheda_residenze;
+
+    if(scheda){
+       Object.assign(r, appiattisciOggetto(scheda,'scheda'));
+       const piani=scheda.scheda_residenze_piani || [];
+       
+       piani.forEach((p,i)=>{
+         // --- Definiamo solo i campi del piano che vogliamo visualizzare ---
+         const campiConsentiti = ['piano', 'accessibile', 'num_camere', 'num_camere_accessibili', 'nota'];
+         
+         campiConsentiti.forEach(c => {
+           // Se il campo esiste nel record del database, lo aggiungiamo alla riga della tabella
+           if (p[c] !== undefined) {
+             r[`piano_${i}_${c}`] = p[c];
+           }
+         });
+         // --------------------------------------------------------------------------------
+       });
+    }
+    righe.push(r);
+  });
+
+  const colonne=[...new Set(righe.flatMap(x=>Object.keys(x)))];
+
+
+      let html=`<table id="tabellaCompleta" class="display nowrap" style="width:100%"><thead><tr>`;
+
+      colonne.forEach(c => {
+        let titolo = c;
+        titolo = titolo.replace(/^scheda_/, '');
+        titolo = titolo.replace(/^piano_(\d+)_/, (_, piano) => {
+          return `Piano ${parseInt(piano) + 1} - `;
+        });
+        titolo = titolo.replaceAll('_', ' ');
+        titolo = titolo
+          .split(' ')
+          .map(parola => parola.charAt(0).toUpperCase() + parola.slice(1))
+          .join(' ');
+
+        html += `<th>${titolo}</th>`;
+      });
+      html+=`</tr></thead><tbody>`;
+
+      righe.forEach(r=>{
+         html+='<tr>';
+         colonne.forEach(c=>{
+            let v=r[c];
+            if(v===true) v='SI';
+            if(v===false) v='NO';
+            if(v===null || v===undefined) v='';
+            html+=`<td>${v}</td>`;
+         });
+         html+='</tr>';
+      });
+
+      html+='</tbody></table>';
+      document.getElementById('lista-residenze').innerHTML=html;
+
+      // Inizializzazione DataTables con FixedColumns funzionante
+		// Inizializzazione DataTables con colonne nascoste ed export allineati alla griglia
+		$('#tabellaCompleta').DataTable({
+			destroy: true,
+			scrollX: true,
+			scrollCollapse: true,
+			fixedColumns: {
+				left: 1
+			},
+			pageLength: 25,
+			dom: 'Bfrtip',
+			
+			// --- BLOCCO PER GLI EXPORT ---
+			buttons: [
+				{
+					extend: 'copy',
+					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
+				},
+				{
+					extend: 'csv',
+					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
+				},
+				{
+					extend: 'excel',
+					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
+				},
+				{
+					extend: 'print',
+					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
+				}
+			],
+			
+			// Lasciamo l'ID residenza nascosto nella griglia (e ora sarà nascosto anche negli export)
+			columnDefs: [
+				{
+					targets: [0, 6, 9, 11, 12, 13], 
+					visible: false,
+					searchable: false
+				}
+			],
+			// ---------------------------------------------
+
+			language: {
+				search: "🔍 Cerca:",
+				lengthMenu: "Mostra _MENU_ righe",
+				info: "_START_ - _END_ di _TOTAL_",
+				paginate: {
+					previous: "←",
+					next: "→"
+				}
+			}
+		});
+	  
+	  
     }
 
     // Avvia tutto quanto
