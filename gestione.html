@@ -177,9 +177,13 @@
 <body>
 
   <div class="container">
+	<div  id="welcomeMessage"></div>
+  
     <h1>Pannello Gestione Residenze</h1>
     
     <div id="status-box" class="status-alert"></div>
+
+	
 
     <div class="form-row">
       <div class="form-group">
@@ -199,6 +203,12 @@
 
     <div id="form-dati-scheda" style="display:none;">
 	
+	  <div id="box-last-update" class="form-group" style="display: none; margin-top: 15px; background: #e0f2fe; padding: 10px; border-radius: 4px; border-left: 4px solid #0284c7;">
+		<label>ultimo aggiornamento:</label>
+        <span id="testo-last-update" style="font-size: 1.1em; font-weight: bold; margin-top: 5px;"></span>
+      </div>
+	
+	
       <div id="box-telefono" class="form-group" style="display: none; margin-top: 15px; background: #e0f2fe; padding: 10px; border-radius: 4px; border-left: 4px solid #0284c7;">
         <label style="color: #0369a1;">📞 telefono:</label>
         <span id="testo-telefono" style="font-size: 1.1em; font-weight: bold; margin-top: 5px;"></span>
@@ -209,6 +219,21 @@
       <div class="form-group">
         <label>Barriere Architettoniche / Servizi</label>
         <div class="checkbox-group">
+		
+		<label class="checkbox-label"> Portineria
+		<td>
+            <select id= "select-portineria" style="width: 220px;">
+              <option value="No" ${portineria === 'NO' ? 'selected' : ''}>No</option>
+              <option value="SI H24" ${portineria === 'SI H24' ? 'selected' : ''}>Si, H24</option>
+              <option value="SI PRESIDIATA" ${portineria === 'SI PRESIDIATA' ? 'selected' : ''}>Si, Presidiata</option>
+			  <option value="SI PRESIDIATA REMOTO" ${portineria === 'SI PRESIDIATA REMOTO' ? 'selected' : ''}>Si, Presidiata da Remoto</option>
+            </select>
+          </td>
+		</label>
+		
+		  <label class="checkbox-label">
+            <input type="checkbox" id="check-mensa"> Mensa Presente
+          </label>
           <label class="checkbox-label">
             <input type="checkbox" id="check-ascensore"> Ascensore Presente
           </label>
@@ -217,11 +242,18 @@
           </label>
         </div>
       </div>
+	  
+	  <div class="checkbox-group">
+	  <div class="form-group" style="max-width: 200px;">
+        <label for="input-num-ospiti">Numero Ospiti Totali</label>
+        <input type="number" id="input-num-ospiti" min="1" value="1">
+      </div>
 
       <div class="form-group" style="max-width: 200px;">
         <label for="input-piani">Numero Piani Totali</label>
         <input type="number" id="input-piani" min="1" value="1" oninput="rigeneraPianiVuoti()">
       </div>
+	   </div>
 
       <div id="sezione-piani">
         <h2>Dettaglio Singoli Piani</h2>
@@ -244,7 +276,7 @@
         
       </div>
 
-      <button class="btn-salva" onclick="salvaTutto()">SALVA DATI SCHEDA</button>
+      <button class="btn-salva" onclick="salvaTutto()">SALVA DATI RESIDENZA</button>
     </div>
   </div>
 
@@ -257,7 +289,106 @@
     let tutteLeResidenze = [];
     let schedaEsistenteId = null; 
     let pianosCaricatiInMemoria = []; 
+	
+	
+	
+	async function showWelcomeMessage(){
 
+  // =========================
+  // UTENTE LOGGATO
+  // =========================
+
+  const {
+    data: { user }
+  } = await clientSupabase.auth.getUser();
+
+
+  // se non loggato
+  if(!user){
+
+    window.location.href = "/";
+
+    return;
+  }
+
+
+  // =========================
+  // CERCA OPERATORE
+  // =========================
+
+  const { data, error } =
+    await clientSupabase
+      .from("operatori")
+      .select("*")
+      .eq("mail", user.email)
+      .single();
+
+
+  console.log(data, error);
+
+
+  if(error){
+
+    console.log(error);
+
+    return;
+  }
+
+
+  // =========================
+  // DATA E ORA
+  // =========================
+
+  const now = new Date();
+
+  const giorno =
+    String(now.getDate()).padStart(2, '0');
+
+  const mese =
+    String(now.getMonth() + 1).padStart(2, '0');
+
+  const anno =
+    now.getFullYear();
+
+  const ore =
+    String(now.getHours()).padStart(2, '0');
+
+  const minuti =
+    String(now.getMinutes()).padStart(2, '0');
+
+
+  const dataFormattata =
+    `${giorno}/${mese}/${anno}`;
+
+  const oraFormattata =
+    `${ore}:${minuti}`;
+
+console.log(dataFormattata);
+console.log(oraFormattata);
+
+  // =========================
+  // MESSAGGIO
+  // =========================
+
+  document
+    .getElementById("welcomeMessage")
+    .innerHTML =
+
+    `
+      Ciao
+      <b>${data.cognome} ${data.nome}</b>,
+      oggi è il
+      <b>${dataFormattata}</b>
+      e sono le
+      <b>${oraFormattata}</b>
+    `;
+
+}
+	
+	
+	
+	
+	showWelcomeMessage();
     caricaCitta();
 
     async function caricaCitta() {
@@ -304,6 +435,7 @@
       const formDati = document.getElementById('form-dati-scheda');
       
       if (!idResidenza) {
+	    document.getElementById('box-last-update').style.display = "none";
         document.getElementById('box-telefono').style.display = "none";
         formDati.style.display = "none";
         return;
@@ -325,13 +457,15 @@
 
       schedaEsistenteId = null;
       pianosCaricatiInMemoria = [];
+	  document.getElementById('check-mensa').checked = false;
       document.getElementById('check-ascensore').checked = false;
       document.getElementById('check-rampa').checked = false;
+	  document.getElementById('input-num-ospiti').value = 1;
       document.getElementById('input-piani').value = 1;
 
       const { data: schedaData, error: schedaError } = await clientSupabase
         .from('scheda_residenze')
-        .select('id, id_residenza, ascensore, rampa, piani')
+        .select('id, id_residenza, last_update, mensa, ascensore, rampa, num_ospiti, piani, portineria')
         .eq('id_residenza', idResidenza);
 
       if (schedaError) return mostraMessaggio("Errore caricamento scheda: " + schedaError.message, true);
@@ -341,9 +475,43 @@
       if (schedaData && schedaData.length > 0) {
         const scheda = schedaData[0];
         schedaEsistenteId = scheda.id;
-        
+        console.log('mucci');
+		console.log(scheda.last_update);
+		console.log('mucci');
+
+		
+		const ts = scheda.last_update;
+		const date = new Date(ts);
+
+		const data_leggibile = new Intl.DateTimeFormat('it-IT', {
+		  day: '2-digit',
+		  month: '2-digit',
+		  year: '2-digit',
+		  hour: '2-digit',
+		  minute: '2-digit',
+		  hour12: false
+		}).format(date).replace(',', '');
+
+		console.log(data_leggibile);
+		
+		
+		if (scheda.last_update) {
+        const numTel = residenzaSelezionata.telefono.trim();
+        document.getElementById('testo-last-update').innerHTML = `<span style="color: #666; font-style: italic;">${data_leggibile} </span>`;
+        boxTelefono.style.display = "block";
+      } else {
+        document.getElementById('testo-last-update').innerHTML = `<span style="color: #666; font-style: italic;">Nessuna informazione registrata</span>`;
+        boxTelefono.style.display = "block";
+      }
+		
+		
+		
+		document.getElementById('box-last-update').style.display = "block";
+		document.getElementById('select-portineria').value = scheda.portineria;
+		document.getElementById('check-mensa').checked = scheda.mensa;
         document.getElementById('check-ascensore').checked = scheda.ascensore;
         document.getElementById('check-rampa').checked = scheda.rampa;
+		document.getElementById('input-num-ospiti').value = scheda.num_ospiti || 1;
         document.getElementById('input-piani').value = scheda.piani || 1;
 
         const { data: pianiData, error: pianiError } = await clientSupabase
@@ -395,9 +563,12 @@
 
     async function salvaTutto() {
       const idResidenzaVal = document.getElementById('select-residenza').value;
+	  const mensa = document.getElementById('check-mensa').checked;
       const ascensore = document.getElementById('check-ascensore').checked;
       const rampa = document.getElementById('check-rampa').checked;
+	  const num_ospiti = parseInt(document.getElementById('input-num-ospiti').value);
       const piani = parseInt(document.getElementById('input-piani').value);
+	  const portineria = document.getElementById('select-portineria').value;
 
       if (!idResidenzaVal) {
         return mostraMessaggio("Seleziona prima una residenza.", true);
@@ -407,8 +578,11 @@
 
       const datiSchedaGenerale = { 
         id_residenza: idResidenzaId, 
+		portineria : portineria,
+		mensa: mensa, 
         ascensore: ascensore, 
         rampa: rampa, 
+		num_ospiti: num_ospiti,
         piani: piani 
       };
 
@@ -478,7 +652,7 @@
           }
         }
 
-        mostraMessaggio("Tutti i dati e i singoli piani sono stati aggiornati sul loro ID!", false);
+        mostraMessaggio("Aggiornamento effettuato!", false);
         await caricaDatiResidenzaSelezionata();
 
       } catch (err) {
