@@ -230,27 +230,80 @@
             </select>
           </td>
 		</label>
-		
+		</div>
+		<div class="checkbox-group">
 		  <label class="checkbox-label">
-            <input type="checkbox" id="check-mensa"> Mensa Presente
+            <input type="checkbox" id="check-mensa"> Mensa
+          </label>
+		  <label class="checkbox-label">
+            <input type="checkbox" id="check-spazi-esterni"  onchange="spaziEsterni()"> Spazi Esterni
+          </label>
+		  
+			  
+	<div id="sezione-spazi-esterni" style="display: none;">
+	  <div class="table-responsive" id="dettaglio_spazi_esterni">
+		<label class="checkbox-label"><input type="checkbox" id="check-vialetti"> Vialetti</label>
+		<label class="checkbox-label"><input type="checkbox" id="check-ghiaia"> Ghiaia</label>
+		<label class="checkbox-label"><input type="checkbox" id="check-fontane"> Fontane</label>
+		<label class="checkbox-label"><input type="checkbox" id="check-dislivelli"> Dislivelli</label>
+		<label class="checkbox-label"><input type="checkbox" id="check-grigliati"> Grigliati</label>
+	  </div>
+	</div>  
+	  
+	  
+		  
+		  <label class="checkbox-label">
+            <input type="checkbox" id="check-spazi-comuni" onchange="spaziComuni()"> Spazi Comuni
+          </label>
+		  </div>
+
+	<div id="sezione-spazi-comuni" style="display: none; width: max-content; align-items: center; white-space: nowrap;">
+	  <div class="table-responsive" id="dettaglio_spazi_comuni">
+		<label class="checkbox-label"><input type="checkbox" id="check-solo-alloggiati"> Solo Alloggiati</label>
+		<label class="checkbox-label"><input type="checkbox" id="check-sale-studio"> Sale Studio</label>
+		<label class="checkbox-label"><input type="checkbox" id="check-sale-cinema"> Sale Cinema</label>
+	  </div>
+	</div> 		
+
+	
+	<!--	<label class="checkbox-label"><input type="checkbox" id="check-altro"> Altro</label>
+		<td><input type="text" class="spazi-comuni-nota" value="${datiPiano.nota || ''}" placeholder="Nota altro..." style="width:90%;"></td>  -->	
+		  
+		  
+		<div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-ascensore"> Ascensore
+          </label>
+		  <label class="checkbox-label">
+            <input type="checkbox" id="check-montascale"> Montascale
+          </label>
+		  <label class="checkbox-label">
+            <input type="checkbox" id="check-montapersone"> Montapersone
           </label>
           <label class="checkbox-label">
-            <input type="checkbox" id="check-ascensore"> Ascensore Presente
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="check-rampa"> Rampa di Accesso Presente
+            <input type="checkbox" id="check-rampa"> Rampa di Accesso
           </label>
         </div>
       </div>
 	  
 	  <div class="checkbox-group">
 	  <div class="form-group" style="max-width: 200px;">
-        <label for="input-num-ospiti">Numero Ospiti Totali</label>
+        <label for="input-num-ospiti">N Ospiti Totali</label>
         <input type="number" id="input-num-ospiti" min="1" value="1">
+      </div>
+	  
+	  <div class="form-group" style="max-width: 200px;">
+        <label for="input-num-stanze">N Stanze Totali</label>
+        <input type="number" id="input-num-stanze" min="1" value="1">
+      </div>
+	  
+	  <div class="form-group" style="max-width: 200px;">
+        <label for="input-num-stanze-disabili">N Stanze Disabili Tot.</label>
+        <input type="number" id="input-num-stanze-disabili" min="0" value="1">
       </div>
 
       <div class="form-group" style="max-width: 200px;">
-        <label for="input-piani">Numero Piani Totali</label>
+        <label for="input-piani">N Piani Totali</label>
         <input type="number" id="input-piani" min="1" value="1" oninput="rigeneraPianiVuoti()">
       </div>
 	   </div>
@@ -263,6 +316,7 @@
             <thead>
               <tr>
                 <th>Piano</th>
+				<th>Rampa</th>
                 <th>Accessibilità</th>
                 <th>Stanze Tot.</th>
                 <th>Stanze Access.</th>
@@ -458,14 +512,20 @@ console.log(oraFormattata);
       schedaEsistenteId = null;
       pianosCaricatiInMemoria = [];
 	  document.getElementById('check-mensa').checked = false;
+	  document.getElementById('check-spazi-esterni').checked = false;
+	  document.getElementById('check-spazi-comuni').checked = false;
       document.getElementById('check-ascensore').checked = false;
+	  document.getElementById('check-montascale').checked = false;
+	  document.getElementById('check-montapersone').checked = false;
       document.getElementById('check-rampa').checked = false;
 	  document.getElementById('input-num-ospiti').value = 1;
+	  document.getElementById('input-num-stanze').value = 1;
+	  document.getElementById('input-num-stanze-disabili').value = 0;
       document.getElementById('input-piani').value = 1;
 
       const { data: schedaData, error: schedaError } = await clientSupabase
         .from('scheda_residenze')
-        .select('id, id_residenza, last_update, mensa, ascensore, rampa, num_ospiti, piani, portineria')
+        .select('id, id_residenza, last_update, mensa, spazi_esterni, spazi_comuni, ascensore, montascale, montapersone, rampa, num_ospiti,num_stanze, num_stanze_disabili, piani, portineria')
         .eq('id_residenza', idResidenza);
 
       if (schedaError) return mostraMessaggio("Errore caricamento scheda: " + schedaError.message, true);
@@ -509,9 +569,15 @@ console.log(oraFormattata);
 		document.getElementById('box-last-update').style.display = "block";
 		document.getElementById('select-portineria').value = scheda.portineria;
 		document.getElementById('check-mensa').checked = scheda.mensa;
+		document.getElementById('check-spazi-esterni').checked = scheda.spazi_esterni;
+		document.getElementById('check-spazi-comuni').checked = scheda.spazi_comuni;
         document.getElementById('check-ascensore').checked = scheda.ascensore;
+		document.getElementById('check-montascale').checked = scheda.montascale;
+		document.getElementById('check-montapersone').checked = scheda.montapersone;
         document.getElementById('check-rampa').checked = scheda.rampa;
 		document.getElementById('input-num-ospiti').value = scheda.num_ospiti || 1;
+		document.getElementById('input-num-stanze').value = scheda.num_stanze || 1;
+		document.getElementById('input-num-stanze-disabili').value = scheda.num_stanze_disabili || 0;
         document.getElementById('input-piani').value = scheda.piani || 1;
 
         const { data: pianiData, error: pianiError } = await clientSupabase
@@ -542,7 +608,9 @@ console.log(oraFormattata);
 
         tr.innerHTML = `
           <td><strong>Piano ${i}</strong></td>
-          <td>
+
+		  <td><input type="checkbox" class="piano-rampa" ${datiPiano.rampa ? 'checked' : ''} style="width:70px;"></td>
+		  <td>
             <select class="piano-accessibile">
               <option value="Sì" ${datiPiano.accessibile === 'Sì' ? 'selected' : ''}>Sì</option>
               <option value="No" ${datiPiano.accessibile === 'No' ? 'selected' : ''}>No</option>
@@ -556,6 +624,43 @@ console.log(oraFormattata);
         tbody.appendChild(tr);
       }
     }
+	
+	function spaziEsterni() {
+
+	  // Recuperiamo lo stato del checkbox principale
+	  const spazi_esterni = document.getElementById('check-spazi-esterni').checked;
+	  
+	  // Usiamo l'ID corretto del contenitore principale
+	  const divContenitore = document.getElementById('sezione-spazi-esterni');
+	  
+	  
+	  // Logica per mostrare o nascondere in base al click
+	  if (spazi_esterni) {
+		divContenitore.style.display = "block"; // Mostra se selezionato
+	  } else {
+		divContenitore.style.display = "none";  // Nasconde se deselezionato
+	  }
+	}
+	
+
+	function spaziComuni() {
+
+	  // Recuperiamo lo stato del checkbox principale
+	  const spazi_comuni = document.getElementById('check-spazi-comuni').checked;
+	  
+	  // Usiamo l'ID corretto del contenitore principale
+	  const divContenitore = document.getElementById('sezione-spazi-comuni');
+	  
+	  
+	  // Logica per mostrare o nascondere in base al click
+	  if (spazi_comuni) {
+		divContenitore.style.display = "block"; // Mostra se selezionato
+	  } else {
+		divContenitore.style.display = "none";  // Nasconde se deselezionato
+	  }
+	}
+
+
 
     function rigeneraPianiVuoti() {
       generaRighePiani(pianosCaricatiInMemoria);
@@ -564,9 +669,15 @@ console.log(oraFormattata);
     async function salvaTutto() {
       const idResidenzaVal = document.getElementById('select-residenza').value;
 	  const mensa = document.getElementById('check-mensa').checked;
+	  const spazi_esterni = document.getElementById('check-spazi-esterni').checked;
+	  const spazi_comuni = document.getElementById('check-spazi-comuni').checked;
       const ascensore = document.getElementById('check-ascensore').checked;
+	  const montascale = document.getElementById('check-montascale').checked;
+	  const montapersone = document.getElementById('check-montapersone').checked;
       const rampa = document.getElementById('check-rampa').checked;
 	  const num_ospiti = parseInt(document.getElementById('input-num-ospiti').value);
+	  const num_stanze = parseInt(document.getElementById('input-num-stanze').value);
+	  const num_stanze_disabili = parseInt(document.getElementById('input-num-stanze-disabili').value);
       const piani = parseInt(document.getElementById('input-piani').value);
 	  const portineria = document.getElementById('select-portineria').value;
 
@@ -579,10 +690,16 @@ console.log(oraFormattata);
       const datiSchedaGenerale = { 
         id_residenza: idResidenzaId, 
 		portineria : portineria,
+		spazi_esterni : spazi_esterni,
+		spazi_comuni : spazi_comuni,
 		mensa: mensa, 
         ascensore: ascensore, 
+		montascale: montascale, 
+		montapersone: montapersone, 
         rampa: rampa, 
 		num_ospiti: num_ospiti,
+		num_stanze: num_stanze,
+		num_stanze_disabili: num_stanze_disabili,
         piani: piani 
       };
 
@@ -626,11 +743,11 @@ console.log(oraFormattata);
             id_scheda: idSchedaReale,
             piano: numeroPianoCorrente,
             accessibile: tr.querySelector('.piano-accessibile').value,
+			rampa: tr.querySelector('.piano-rampa').checked,
             num_camere: parseInt(tr.querySelector('.piano-stanze').value) || 0,
             num_camere_accessibili: parseInt(tr.querySelector('.piano-stanze-acc').value) || 0,
             nota: tr.querySelector('.piano-nota').value
           };
-
           if (pianoEsistenteNelDB && pianoEsistenteNelDB.id) {
             console.log(`Aggiorno piano ${numeroPianoCorrente} sulla riga ID: ${pianoEsistenteNelDB.id}`);
             
