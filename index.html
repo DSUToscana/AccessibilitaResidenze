@@ -259,6 +259,7 @@
             id,
             struttura,
             indirizzo,
+			cap,
             localita,
             telefono,
             id_citta,
@@ -315,6 +316,14 @@
         const pianos = (scheda && scheda.scheda_residenze_piani) ? scheda.scheda_residenze_piani : [];
         const nomeCitta = residenza.citta ? residenza.citta.citta : (residenza.localita || 'N/D');
 
+
+		const via = encodeURIComponent(residenza.indirizzo.trim());
+		const cap = encodeURIComponent(residenza?.cap?.trim() || "");
+		const localita = encodeURIComponent(residenza.localita.trim());
+		const indirizzoCompleto = via + ','+ cap + ','+ localita;
+			// Sostituisce tutti gli spazi con il carattere '+'
+		const indirizzoFormattato = indirizzoCompleto.trim().replace(/\s+/g, '+');
+
         const card = document.createElement('div');
         card.className = 'card';
 
@@ -370,12 +379,20 @@
           pianosHTML = `<div class="info-line" style="color:#888; font-style:italic; margin-top:15px; text-align:center;">Nessun piano registrato</div>`;
         }
 
+
+		
+
         card.innerHTML = `
           <h2 style="margin-top:0;">${residenza.struttura || 'Senza nome'}</h2>
-          <div class="info-line"><strong>Indirizzo:</strong> ${residenza.indirizzo || 'N/D'}</div>
-          <div class="info-line"><strong>Città / Località:</strong> ${nomeCitta}</div>
-          <div class="info-line"><strong>Tel:</strong>
-          <a href="tel:${residenza.telefono || 'N/D'}" style="color: #0284c7; text-decoration: none;">${residenza.telefono || 'N/D'} 📞 </a></div>
+          <div class="info-line"><strong>Indirizzo:</strong> ${residenza.indirizzo || 'N/D'}
+			<a id="mapsButton" href="https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}" target="_blank" style="text-decoration: none; font-size: 1.2em; border: none; background: transparent;">📍</a>
+		  </div>
+		  <div class="info-line"><strong>Cap:</strong> ${residenza.cap || 'N/D'}</div>
+          <div class="info-line"><strong>Città / Località:</strong> ${nomeCitta}
+			</div>
+		  <div class="info-line"><strong>Tel:</strong> 
+			<a href="tel:${residenza.telefono || 'N/D'}" style="color: #0284c7; text-decoration: none;">${residenza.telefono || 'N/D'} 📞 </a>
+		  </div>
           ${schedaHTML}
           ${pianosHTML}
         `;
@@ -438,137 +455,129 @@
 
 
 
-
-
-
 function renderTabellaCompleta(residenze){
   const righe=[];
 
   residenze.forEach(x=>{
+    // --- Preparazione indirizzo formattato per Google Maps ---
+    const via = encodeURIComponent((x.indirizzo || '').trim());
+    const cap = encodeURIComponent((x.cap || '').trim());
+    const localita = encodeURIComponent((x.localita || '').trim());
+    const indirizzoCompleto = [via, cap, localita].filter(Boolean).join(',');
+    const indirizzoFormattato = indirizzoCompleto.replace(/\s+/g, '+');
+
+    // --- Generazione Link HTML ---
+    const indirizzoHTML = x.indirizzo ? 
+      `${x.indirizzo} <a href="https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; font-size:1.1em;">📍</a>` 
+      : '';
+
+    const telefonoHTML = x.telefono ? 
+      `<a href="tel:${x.telefono.replace(/\s+/g, '')}" style="color: #0284c7; text-decoration: none;">${x.telefono} 📞</a>` 
+      : '';
+
     const r={
-       id:x.id,
-       struttura:x.struttura,
-       indirizzo:x.indirizzo,
-       localita:x.localita,
-       telefono:x.telefono,
-       citta:x.citta?.citta || ''
+       id: x.id,
+       struttura: x.struttura,
+       indirizzo: indirizzoHTML, // Inseriamo il codice HTML con il link a Google Maps
+       cap: x.cap,
+       localita: x.localita,
+       telefono: telefonoHTML,   // Inseriamo il codice HTML con il link per chiamare
+       citta: x.citta?.citta || ''
     };
 
-    const scheda=Array.isArray(x.scheda_residenze)
+    const scheda = Array.isArray(x.scheda_residenze)
        ? x.scheda_residenze[0]
        : x.scheda_residenze;
 
     if(scheda){
        Object.assign(r, appiattisciOggetto(scheda,'scheda'));
-       const piani=scheda.scheda_residenze_piani || [];
+       const piani = scheda.scheda_residenze_piani || [];
        
        piani.forEach((p,i)=>{
-         // --- Definiamo solo i campi del piano che vogliamo visualizzare ---
          const campiConsentiti = ['piano', 'accessibile', 'num_camere', 'num_camere_accessibili', 'nota'];
          
          campiConsentiti.forEach(c => {
-           // Se il campo esiste nel record del database, lo aggiungiamo alla riga della tabella
            if (p[c] !== undefined) {
              r[`piano_${i}_${c}`] = p[c];
            }
          });
-         // --------------------------------------------------------------------------------
        });
     }
     righe.push(r);
   });
 
-  const colonne=[...new Set(righe.flatMap(x=>Object.keys(x)))];
+  const colonne = [...new Set(righe.flatMap(x=>Object.keys(x)))];
 
+  let html = `<table id="tabellaCompleta" class="display nowrap" style="width:100%"><thead><tr>`;
 
-      let html=`<table id="tabellaCompleta" class="display nowrap" style="width:100%"><thead><tr>`;
+  colonne.forEach(c => {
+    let titolo = c;
+    titolo = titolo.replace(/^scheda_/, '');
+    titolo = titolo.replace(/^piano_(\d+)_/, (_, piano) => {
+      return `Piano ${parseInt(piano) + 1} - `;
+    });
+    titolo = titolo.replaceAll('_', ' ');
+    titolo = titolo
+      .split(' ')
+      .map(parola => parola.charAt(0).toUpperCase() + parola.slice(1))
+      .join(' ');
 
-      colonne.forEach(c => {
-        let titolo = c;
-        titolo = titolo.replace(/^scheda_/, '');
-        titolo = titolo.replace(/^piano_(\d+)_/, (_, piano) => {
-          return `Piano ${parseInt(piano) + 1} - `;
-        });
-        titolo = titolo.replaceAll('_', ' ');
-        titolo = titolo
-          .split(' ')
-          .map(parola => parola.charAt(0).toUpperCase() + parola.slice(1))
-          .join(' ');
+    html += `<th>${titolo}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
 
-        html += `<th>${titolo}</th>`;
-      });
-      html+=`</tr></thead><tbody>`;
+  righe.forEach(r=>{
+     html += '<tr>';
+     colonne.forEach(c=>{
+        let v = r[c];
+        if(v === true) v = 'SI';
+        if(v === false) v = 'NO';
+        if(v === null || v === undefined) v = '';
+        html += `<td>${v}</td>`;
+     });
+     html += '</tr>';
+  });
 
-      righe.forEach(r=>{
-         html+='<tr>';
-         colonne.forEach(c=>{
-            let v=r[c];
-            if(v===true) v='SI';
-            if(v===false) v='NO';
-            if(v===null || v===undefined) v='';
-            html+=`<td>${v}</td>`;
-         });
-         html+='</tr>';
-      });
+  html += '</tbody></table>';
+  document.getElementById('lista-residenze').innerHTML = html;
 
-      html+='</tbody></table>';
-      document.getElementById('lista-residenze').innerHTML=html;
-
-      // Inizializzazione DataTables con FixedColumns funzionante
-		// Inizializzazione DataTables con colonne nascoste ed export allineati alla griglia
-		$('#tabellaCompleta').DataTable({
-			destroy: true,
-			scrollX: true,
-			scrollCollapse: true,
-			fixedColumns: {
-				left: 1
-			},
-			pageLength: 25,
-			dom: 'Bfrtip',
-			
-			// --- BLOCCO PER GLI EXPORT ---
-			buttons: [
-				{
-					extend: 'copy',
-					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
-				},
-				{
-					extend: 'csv',
-					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
-				},
-				{
-					extend: 'excel',
-					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
-				},
-				{
-					extend: 'print',
-					exportOptions: { columns: ':visible' } // Esporta solo le colonne visibili
-				}
-			],
-			
-			// Lasciamo l'ID residenza nascosto nella griglia (e ora sarà nascosto anche negli export)
-			columnDefs: [
-				{
-					targets: [0, 6, 9, 11, 12, 13], 
-					visible: false,
-					searchable: false
-				}
-			],
-			// ---------------------------------------------
-
-			language: {
-				search: "🔍 Cerca:",
-				lengthMenu: "Mostra _MENU_ righe",
-				info: "_START_ - _END_ di _TOTAL_",
-				paginate: {
-					previous: "←",
-					next: "→"
-				}
-			}
-		});
-	  
-	  
+  // Inizializzazione DataTables
+  $('#tabellaCompleta').DataTable({
+    destroy: true,
+    scrollX: true,
+    scrollCollapse: true,
+    fixedColumns: {
+      left: 1
+    },
+    pageLength: 25,
+    dom: 'Bfrtip',
+    buttons: [
+      { extend: 'copy', exportOptions: { columns: ':visible' } },
+      { extend: 'csv', exportOptions: { columns: ':visible' } },
+      { extend: 'excel', exportOptions: { columns: ':visible' } },
+      { extend: 'print', exportOptions: { columns: ':visible' } }
+    ],
+    columnDefs: [
+      {
+        targets: [0, 6, 9, 11, 12, 13], 
+        visible: false,
+        searchable: false
+      }
+    ],
+    language: {
+      search: "🔍 Cerca:",
+      lengthMenu: "Mostra _MENU_ righe",
+      info: "_START_ - _END_ di _TOTAL_",
+      paginate: {
+        previous: "←",
+        next: "→"
+      }
     }
+  });
+}
+
+
+
 
     // Avvia tutto quanto
     inizializzaPagina();

@@ -209,10 +209,32 @@
       </div>
 	
 	
-      <div id="box-telefono" class="form-group" style="display: none; margin-top: 15px; background: #e0f2fe; padding: 10px; border-radius: 4px; border-left: 4px solid #0284c7;">
-        <label style="color: #0369a1;">📞 telefono:</label>
-        <span id="testo-telefono" style="font-size: 1.1em; font-weight: bold; margin-top: 5px;"></span>
-      </div>
+	
+
+	<div style="display: flex; gap: 15px; align-items: stretch; width: 100%;">
+
+	  <div class="address-box" style="display: none; flex: 1; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #0284c7;">
+	
+	<label style="color: #0369a1;">📍 indirizzo:</label>
+		<span id="box-indirizzo" style="font-size: 1.1em; font-weight: bold; color: #0369a1;">Via Roma 1, Milano</span>
+
+		<a id="mapsButton" href="https://google.com" target="_blank" style="text-decoration: none; font-size: 1.2em; border: none; background: transparent;">
+				📍
+		</a>
+	  </div>
+
+
+	  <div id="box-telefono" class="form-group" style="display: none; flex: 1; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #0284c7;">
+		<label style="color: #0369a1;">📞 telefono:</label>
+		<span id="testo-telefono" style="font-size: 1.1em; font-weight: bold; margin-top: 5px; color: #0369a1;"></span>
+	  </div>
+
+	</div>
+
+
+	
+	
+
 	
       <h2>Scheda Tecnica Generale</h2>
       
@@ -471,7 +493,7 @@ console.log(oraFormattata);
         return;
       }
 
-      const { data, error } = await clientSupabase.from('residenze').select('id, struttura, telefono').eq('id_citta', idCitta);
+      const { data, error } = await clientSupabase.from('residenze').select('id, struttura, telefono, indirizzo, cap, localita').eq('id_citta', idCitta);
       if (error) return mostraMessaggio("Errore caricamento residenze", true);
 
       tutteLeResidenze = data;
@@ -491,6 +513,8 @@ console.log(oraFormattata);
       if (!idResidenza) {
 	    document.getElementById('box-last-update').style.display = "none";
         document.getElementById('box-telefono').style.display = "none";
+		document.getElementById('box-indirizzo').style.display = "none";
+		
         formDati.style.display = "none";
         return;
       }
@@ -508,6 +532,40 @@ console.log(oraFormattata);
         testoTelefono.innerHTML = `<span style="color: #666; font-style: italic;">Nessun telefono registrato</span>`;
         boxTelefono.style.display = "block";
       }
+	  
+	  
+	  
+	  // 1. Seleziona gli elementi corretti presenti nel tuo HTML
+		const boxIndirizzo = document.querySelector('.address-box'); // Seleziona il div contenitore
+		const spanIndirizzo = document.getElementById('box-indirizzo'); // Lo span del testo
+		const mapsButton = document.getElementById('mapsButton'); // Il pulsante di Maps
+
+		if (residenzaSelezionata && residenzaSelezionata.indirizzo && residenzaSelezionata.cap && residenzaSelezionata.localita) {
+			const via = encodeURIComponent(residenzaSelezionata.indirizzo.trim());
+			const cap = encodeURIComponent(residenzaSelezionata.cap.trim());
+			const localita = encodeURIComponent(residenzaSelezionata.localita.trim());
+
+		  
+		  // 2. Aggiorna il testo visibile dell'indirizzo
+		   spanIndirizzo.textContent = residenzaSelezionata.indirizzo.trim() + ','+ residenzaSelezionata.cap.trim() + ','+ residenzaSelezionata.localita.trim();
+		  // 3. Genera l'URL dinamico codificato per Google Maps
+			const indirizzoCompleto = via + ','+ cap + ','+ localita;
+			// Sostituisce tutti gli spazi con il carattere '+'
+			const indirizzoFormattato = indirizzoCompleto.trim().replace(/\s+/g, '+');
+			// Assegna l'URL corretto al pulsante Maps
+			mapsButton.href = `https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}`;
+		  // 4. Mostra il contenitore dell'indirizzo
+		  boxIndirizzo.style.display = "block";
+		  
+		} else {
+		  // Se l'indirizzo manca, mostra un avviso o nascondi il box
+		  spanIndirizzo.innerHTML = `<span style="color: #666; font-style: italic;">Nessun indirizzo registrato</span>`;
+		  mapsButton.href = "#"; // Disabilita il link di Maps
+		}
+
+	  
+	  
+	  
 
       schedaEsistenteId = null;
       pianosCaricatiInMemoria = [];
