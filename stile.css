@@ -1,0 +1,555 @@
+    :root {
+      --primary-color: #3ecf8e;
+      --dark-color: #1c1c1c;
+      --bg-color: #f4f7f6;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 15px; /* Ridotto il padding per dare respiro sui telefoni */
+      background-color: var(--bg-color);
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px; /* Ridotto da 30px per recuperare spazio su mobile */
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      box-sizing: border-box;
+    }
+
+    h1 {
+      color: var(--dark-color);
+      border-bottom: 3px solid var(--primary-color);
+      padding-bottom: 10px;
+      margin-bottom: 25px;
+      font-size: 1.6rem; /* Dimensioni dinamiche del titolo */
+    }
+
+    h2 {
+      font-size: 1.1em;
+      color: #555;
+      margin-top: 20px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /* Di base (su mobile) i selettori vanno uno sotto l'altro */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr; 
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      color: #444;
+    }
+
+    select, input[type="number"], input[type="text"] {
+      padding: 12px; /* Leggermente più grande per facilitare il tocco delle dita */
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+      outline: none;
+      box-sizing: border-box;
+      width: 100%; /* Copre l'intera larghezza disponibile */
+    }
+
+    select:focus, input:focus {
+      border-color: var(--primary-color);
+    }
+
+    /* Checkbox disposti in verticale su mobile, in orizzontale su schermi grandi */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 5px 0;
+    }
+
+    /* CONTENITORE PER LO SWIPE ORIZZONTALE DELLA TABELLA SU MOBILE */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto; /* Attiva lo scorrimento solo per la tabella se non ci sta */
+      -webkit-overflow-scrolling: touch;
+      margin-top: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .tabella-inserimento-piani {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px; /* Impedisce alla tabella di rimpicciolirsi troppo diventando illeggibile */
+    }
+
+    .tabella-inserimento-piani th, .tabella-inserimento-piani td {
+      border: none;
+      border-bottom: 1px solid #ddd;
+      padding: 10px 8px;
+      text-align: left;
+    }
+
+    .tabella-inserimento-piani th {
+      background-color: #f9f9f9;
+    }
+
+    .btn-salva {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 15px 20px; /* Pulsante più alto, più facile da cliccare */
+      font-size: 1.1em;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 30px;
+      transition: background 0.2s;
+      -webkit-appearance: none; /* Rimuove lo stile di default di iOS */
+    }
+
+    .btn-salva:hover {
+      background-color: #34b279;
+    }
+
+    .status-alert {
+      padding: 12px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      display: none;
+      font-weight: bold;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* MEDIA QUERIES: Regole applicate SOLO su PC (schermi sopra i 600px) */
+    /* ------------------------------------------------------------- */
+    @media (min-width: 600px) {
+      body {
+        padding: 30px;
+      }
+      .container {
+        padding: 30px;
+      }
+      h1 {
+        font-size: 2.2rem;
+      }
+      .form-row {
+        grid-template-columns: 1fr 1fr; /* Torna su due colonne affiancate */
+        gap: 20px;
+      }
+      .checkbox-group {
+        flex-direction: row; /* Rimette i checkbox affiancati */
+        gap: 20px;
+      }
+	  
+	  
+	  
+	  /* Stile Accordion Stanze */
+		.stanza-card {
+		  border: 1px solid #cbd5e1;
+		  border-radius: 6px;
+		  margin-bottom: 15px;
+		  background-color: #fff;
+		  overflow: hidden;
+		}
+
+		.stanza-header {
+		  background-color: #f1f5f9;
+		  padding: 12px 15px;
+		  font-weight: bold;
+		  cursor: pointer;
+		  display: flex;
+		  justify-content: space-between;
+		  align-items: center;
+		  color: #1e293b;
+		  border-bottom: 1px solid #e2e8f0;
+		}
+
+		.stanza-header:hover {
+		  background-color: #e2e8f0;
+		}
+
+		.stanza-body {
+		  padding: 15px;
+		  display: none; /* Nascosto di default */
+		}
+
+		.categoria-grid {
+		  display: grid;
+		  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		  gap: 15px;
+		}
+
+		.categoria-box {
+		  background-color: #f8fafc;
+		  border: 1px solid #e2e8f0;
+		  border-radius: 6px;
+		  padding: 12px;
+		}
+
+		.categoria-box h4 {
+		  margin: 0 0 8px 0;
+		  font-size: 0.95rem;
+		  color: #0284c7;
+		}
+	  
+	  
+		/* Stili per i vari livelli dell'alberatura */
+		.nodo-area {
+		  border-left: 4px solid #0284c7; /* Blu per l'Area */
+		  margin-bottom: 10px;
+		  background-color: #f8fafc;
+		}
+
+		.header-livello-1 {
+		  background-color: #e0f2fe;
+		  padding: 10px 15px;
+		  font-size: 1rem;
+		  cursor: pointer;
+		  display: flex;
+		  justify-content: space-between;
+		}
+
+		.nodo-ambito {
+		  border-left: 4px solid #0d9488; /* Ottanio per l'Ambito */
+		  margin: 8px 0 8px 15px;
+		}
+
+		.header-livello-2 {
+		  background-color: #ccfbf1;
+		  padding: 8px 12px;
+		  font-size: 0.95rem;
+		  cursor: pointer;
+		  display: flex;
+		  justify-content: space-between;
+		}
+
+		.nodo-requisito {
+		  background-color: #ffffff;
+		  border: 1px solid #e2e8f0;
+		  border-radius: 6px;
+		  padding: 12px;
+		  margin: 8px 0 8px 25px; /* Spostato più a destra */
+		}
+
+		.requisito-titolo {
+		  color: #1e293b;
+		  margin-bottom: 5px;
+		}
+
+		.requisito-dettagli {
+		  font-size: 0.85rem;
+		  color: #475569;
+		  background-color: #f1f5f9;
+		  padding: 8px;
+		  border-radius: 4px;
+		  margin-bottom: 8px;
+		}
+
+		.requisito-input textarea {
+		  width: 100%;
+		  margin-top: 5px;
+		  border: 1px solid #cbd5e1;
+		  border-radius: 4px;
+		  padding: 6px;
+		  box-sizing: border-box;
+		}
+	  
+	  
+	  
+	  
+    }
+	
+	
+	
+	
+	
+	    :root {
+      --primary-color: #3ecf8e;
+      --dark-color: #1c1c1c;
+      --bg-color: #f4f7f6;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background-color: var(--bg-color);
+      color: #333;
+    }
+
+    .container {
+      max-width: 100%; /* Allargato per ospitare la tabellona */
+      margin: 0 auto;
+      padding: 0 10px;
+    }
+
+    h1 {
+      color: var(--dark-color);
+      border-bottom: 3px solid var(--primary-color);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* BARRA DI FILTRAGGIO */
+    .filter-bar {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .filter-bar label {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .filter-bar select {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+      min-width: 200px;
+      outline: none;
+    }
+
+    .filter-bar select:focus {
+      border-color: var(--primary-color);
+    }
+
+    /* GRID E CARD */
+    .residenze-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      border-top: 4px solid var(--primary-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-line {
+      margin: 8px 0;
+      font-size: 0.95em;
+    }
+
+    .info-line strong {
+      color: #555;
+    }
+
+    .scheda-box {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+      border: 1px solid #eaeaea;
+    }
+
+    .scheda-box h3 {
+      margin: 0 0 8px 0;
+      font-size: 1em;
+      color: #008060;
+    }
+
+    .btn-espandi {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      padding: 8px;
+      width: 100%;
+      border-radius: 4px;
+      background-color: #f0fdf4;
+      transition: background 0.2s;
+    }
+
+    .btn-espandi:hover {
+      background-color: #dcfce7;
+    }
+
+    .piani-container {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #ccc;
+    }
+
+    .piani-container.mostra {
+      display: block;
+    }
+
+    .tabella-piani {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.85em;
+    }
+
+    .tabella-piani th, .tabella-piani td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .tabella-piani th {
+      background-color: #eee;
+      color: #333;
+    }
+
+    .status-msg {
+      font-size: 1.2em;
+      text-align: center;
+      margin-top: 50px;
+      color: #666;
+    }
+  
+    #btnVistaCompleta,#btnVistaNormale{
+      padding:8px 14px;border:none;border-radius:4px;cursor:pointer;
+      background:#3ecf8e;color:white;font-weight:bold;
+    }
+    
+    .dataTables_wrapper{
+      width:100%;
+      margin-top: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .dt-buttons{margin-bottom:15px;}
+	
+	/* Colori pastello per le card dei piani */
+	.card-piano-colore-0 {
+	  background-color: #fff9db !important; /* Giallo pastello */
+	  border-left: 6px solid #fcc419 !important;
+	}
+
+	.card-piano-colore-1 {
+	  background-color: #ebfbee !important; /* Verde pastello */
+	  border-left: 6px solid #51cf66 !important;
+	}
+
+	.card-piano-colore-2 {
+	  background-color: #e7f5ff !important; /* Azzurro pastello */
+	  border-left: 6px solid #339af0 !important;
+	}
+
+	.card-piano-colore-3 {
+	  background-color: #f3d9fa !important; /* Viola/Lilla pastello */
+	  border-left: 6px solid #cc5de8 !important;
+	}
+
+	.card-piano-colore-4 {
+	  background-color: #ffe8cc !important; /* Arancione/Pescagiallo pastello */
+	  border-left: 6px solid #ff922b !important;
+	}
+
+	.card-piano-colore-5 {
+	  background-color: #ffe3e3 !important; /* Rosa pastello */
+	  border-left: 6px solid #ff6b6b !important;
+}
+	
+	
+	
+	
+	
+	/* Container del dropdown stile input */
+.dropdown-multiselect {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 380px;
+  font-size: 14px;
+}
+
+/* L'intestazione cliccabile (Summary) */
+.dropdown-multiselect summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #334155;
+  list-style: none; /* Nasconde la freccetta nativa standard */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Aggiunge la nostra freccetta personalizzata */
+.dropdown-multiselect summary::after {
+  content: '▼';
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* Quando la tendina è aperta, gira la freccetta */
+.dropdown-multiselect[open] summary::after {
+  content: '▲';
+}
+
+/* Griglia per le opzioni interne */
+.dropdown-multiselect .opzioni-grid {
+  padding: 8px 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+  background-color: #f8fafc;
+}
+
+.dropdown-multiselect label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #1e293b;
+}
+	
+/* Applica al contenitore della riga/colonna del checkbox */
+.campo-checkbox-wrapper {
+  display: inline-block;
+  vertical-align: top; /* Costringe tutti i box ad allinearsi in cima */
+}	
+	
+	

@@ -5,181 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pannello Gestione - Inserimento e Modifica</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --primary-color: #3ecf8e;
-      --dark-color: #1c1c1c;
-      --bg-color: #f4f7f6;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 15px; /* Ridotto il padding per dare respiro sui telefoni */
-      background-color: var(--bg-color);
-      color: #333;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px; /* Ridotto da 30px per recuperare spazio su mobile */
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      box-sizing: border-box;
-    }
-
-    h1 {
-      color: var(--dark-color);
-      border-bottom: 3px solid var(--primary-color);
-      padding-bottom: 10px;
-      margin-bottom: 25px;
-      font-size: 1.6rem; /* Dimensioni dinamiche del titolo */
-    }
-
-    h2 {
-      font-size: 1.1em;
-      color: #555;
-      margin-top: 20px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 5px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    /* Di base (su mobile) i selettori vanno uno sotto l'altro */
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr; 
-      gap: 15px;
-    }
-
-    label {
-      font-weight: bold;
-      color: #444;
-    }
-
-    select, input[type="number"], input[type="text"] {
-      padding: 12px; /* Leggermente più grande per facilitare il tocco delle dita */
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1em;
-      outline: none;
-      box-sizing: border-box;
-      width: 100%; /* Copre l'intera larghezza disponibile */
-    }
-
-    select:focus, input:focus {
-      border-color: var(--primary-color);
-    }
-
-    /* Checkbox disposti in verticale su mobile, in orizzontale su schermi grandi */
-    .checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 10px;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 5px 0;
-    }
-
-    /* CONTENITORE PER LO SWIPE ORIZZONTALE DELLA TABELLA SU MOBILE */
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto; /* Attiva lo scorrimento solo per la tabella se non ci sta */
-      -webkit-overflow-scrolling: touch;
-      margin-top: 15px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    .tabella-inserimento-piani {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 600px; /* Impedisce alla tabella di rimpicciolirsi troppo diventando illeggibile */
-    }
-
-    .tabella-inserimento-piani th, .tabella-inserimento-piani td {
-      border: none;
-      border-bottom: 1px solid #ddd;
-      padding: 10px 8px;
-      text-align: left;
-    }
-
-    .tabella-inserimento-piani th {
-      background-color: #f9f9f9;
-    }
-
-    .btn-salva {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 15px 20px; /* Pulsante più alto, più facile da cliccare */
-      font-size: 1.1em;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 30px;
-      transition: background 0.2s;
-      -webkit-appearance: none; /* Rimuove lo stile di default di iOS */
-    }
-
-    .btn-salva:hover {
-      background-color: #34b279;
-    }
-
-    .status-alert {
-      padding: 12px;
-      margin-bottom: 20px;
-      border-radius: 4px;
-      display: none;
-      font-weight: bold;
-    }
-
-    /* ------------------------------------------------------------- */
-    /* MEDIA QUERIES: Regole applicate SOLO su PC (schermi sopra i 600px) */
-    /* ------------------------------------------------------------- */
-    @media (min-width: 600px) {
-      body {
-        padding: 30px;
-      }
-      .container {
-        padding: 30px;
-      }
-      h1 {
-        font-size: 2.2rem;
-      }
-      .form-row {
-        grid-template-columns: 1fr 1fr; /* Torna su due colonne affiancate */
-        gap: 20px;
-      }
-      .checkbox-group {
-        flex-direction: row; /* Rimette i checkbox affiancati */
-        gap: 20px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="stile.css">
 </head>
 <body>
 
   <div class="container">
+  
+  
+  
+  
+  
 	<div  id="welcomeMessage"></div>
   
-    <h1>Pannello Gestione Residenze</h1>
+    <h1>Rilevazione Caratteristiche Residenze</h1>
     
     <div id="status-box" class="status-alert"></div>
 
@@ -257,28 +95,61 @@
 		  <label class="checkbox-label">
             <input type="checkbox" id="check-mensa"> Mensa
           </label>
-		  <label class="checkbox-label">
-            <input type="checkbox" id="check-spazi-esterni"  onchange="spaziEsterni()"> Spazi Esterni
-          </label>
 		  
-			  
-	<div id="sezione-spazi-esterni" style="display: none;">
-	  <div class="table-responsive" id="dettaglio_spazi_esterni">
-		<label class="checkbox-label"><input type="checkbox" id="check-vialetti"> Vialetti</label>
-		<label class="checkbox-label"><input type="checkbox" id="check-ghiaia"> Ghiaia</label>
-		<label class="checkbox-label"><input type="checkbox" id="check-fontane"> Fontane</label>
-		<label class="checkbox-label"><input type="checkbox" id="check-dislivelli"> Dislivelli</label>
-		<label class="checkbox-label"><input type="checkbox" id="check-grigliati"> Grigliati</label>
-	  </div>
-	</div>  
+		 
 	  
 	  
-		  
-		  <label class="checkbox-label">
-            <input type="checkbox" id="check-spazi-comuni" onchange="spaziComuni()"> Spazi Comuni
-          </label>
-		  </div>
+	  
+	  
+	  
+	  <!-- Checkbox Padre  Spazi Esterni-->
+		<label class="checkbox-label-padre" style="font-weight: bold; cursor: pointer;">
+		  <input type="checkbox" id="check-spazi-esterni" onchange="toggleSpaziEsterni()"> 
+		  Spazi Esterni
+		</label>
 
+		<!-- Sezione Figlio (Visibile solo se il padre è spuntato) -->
+		<div id="sezione-spazi-esterni" style="display: none; margin-top: 8px;">
+		  <details class="dropdown-multiselect">
+			<summary id="summary-spazi-esterni">Elementi Spazi Esterni:</summary>
+			<div class="opzioni-grid">
+			  <label><input type="checkbox" class="chk-servizio-esterno" value="Vialetti" onchange="aggiornaTestoSummary()"> Vialetti</label>
+			  <label><input type="checkbox" class="chk-servizio-esterno" value="Ghiaia" onchange="aggiornaTestoSummary()"> Ghiaia</label>
+			  <label><input type="checkbox" class="chk-servizio-esterno" value="Fontane" onchange="aggiornaTestoSummary()"> Fontane</label>
+			  <label><input type="checkbox" class="chk-servizio-esterno" value="Dislivelli" onchange="aggiornaTestoSummary()"> Dislivelli</label>
+			  <label><input type="checkbox" class="chk-servizio-esterno" value="Grigliati" onchange="aggiornaTestoSummary()"> Grigliati</label>
+			</div>
+		  </details>
+		</div>
+	  
+	  
+
+
+
+	  <!-- Checkbox Padre  Spazi Comuni-->
+		<label class="checkbox-label-padre" style="font-weight: bold; cursor: pointer;">
+		  <input type="checkbox" id="check-spazi-comuni" onchange="toggleSpaziComuni()"> 
+		  Spazi Comuni
+		</label>
+
+		<!-- Sezione Figlio (Visibile solo se il padre è spuntato) -->
+		<div id="sezione-spazi-comuni" style="display: none; margin-top: 8px;">
+		  <details class="dropdown-multiselect">
+			<summary id="summary-spazi-comuni">Elementi Spazi Comuni:</summary>
+			<div class="opzioni-grid">
+			  <label><input type="checkbox" class="chk-servizio-comune" value="SoloAlloggiati" onchange="aggiornaTestoComuniSummary()"> Solo Alloggiati</label>
+			  <label><input type="checkbox" class="chk-servizio-comune" value="SaleStudio" onchange="aggiornaTestoComuniSummary()"> Sale Studio</label>
+			  <label><input type="checkbox" class="chk-servizio-comune" value="Sale Cinema" onchange="aggiornaTestoComuniSummary()"> Sale Cinema</label>
+			  <label><input type="checkbox" class="chk-servizio-comune" value="SaleMusica" onchange="aggiornaTestoComuniSummary()"> Sale Musica</label>
+			  <label><input type="checkbox" class="chk-servizio-comune" value="Palestra" onchange="aggiornaTestoComuniSummary()"> Palestra</label>
+			</div>
+		  </details>
+		</div>
+
+
+
+
+<!--
 	<div id="sezione-spazi-comuni" style="display: none; width: max-content; align-items: center; white-space: nowrap;">
 	  <div class="table-responsive" id="dettaglio_spazi_comuni">
 		<label class="checkbox-label"><input type="checkbox" id="check-solo-alloggiati"> Solo Alloggiati</label>
@@ -286,7 +157,7 @@
 		<label class="checkbox-label"><input type="checkbox" id="check-sale-cinema"> Sale Cinema</label>
 	  </div>
 	</div> 		
-
+-->
 	
 	<!--	<label class="checkbox-label"><input type="checkbox" id="check-altro"> Altro</label>
 		<td><input type="text" class="spazi-comuni-nota" value="${datiPiano.nota || ''}" placeholder="Nota altro..." style="width:90%;"></td>  -->	
@@ -352,11 +223,25 @@
         
       </div>
 
+	<!-- SEZIONE DINAMICA STANZE ACCESSIBILI -->
+	<div id="sezione-dettaglio-stanze" style="display: none; margin-top: 30px;">
+	  <h2>Dettaglio Stanze Accessibili</h2>
+	  <div id="contenitore-stanze"></div>
+	</div>
+
+
       <button class="btn-salva" onclick="salvaTutto()">SALVA DATI RESIDENZA</button>
     </div>
   </div>
 
+
+    <!-- PRIMA DI TUTTO: I due file JavaScript esterni che contengono le funzioni -->
+  <script src="app.js"></script>
+  <script src="appasync.js"></script>
+
+  <!-- INFINE: Lo script locale per le configurazioni e la logica della pagina -->
   <script>
+    // 1. Configurazione Supabase (Deve stare in alto affinché i file esterni lo vedano)
     const SUPABASE_URL = "https://hrqztgddqmwtljafqahn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
       
@@ -366,484 +251,36 @@
     let schedaEsistenteId = null; 
     let pianosCaricatiInMemoria = []; 
 	
-	
-	
-	async function showWelcomeMessage(){
-
-  // =========================
-  // UTENTE LOGGATO
-  // =========================
-
-  const {
-    data: { user }
-  } = await clientSupabase.auth.getUser();
 
 
-  // se non loggato
-  if(!user){
-
-    window.location.href = "/";
-
-    return;
-  }
-
-
-  // =========================
-  // CERCA OPERATORE
-  // =========================
-
-  const { data, error } =
-    await clientSupabase
-      .from("operatori")
-      .select("*")
-      .eq("mail", user.email)
-      .single();
-
-
-  console.log(data, error);
-
-
-  if(error){
-
-    console.log(error);
-
-    return;
-  }
-
-
-  // =========================
-  // DATA E ORA
-  // =========================
-
-  const now = new Date();
-
-  const giorno =
-    String(now.getDate()).padStart(2, '0');
-
-  const mese =
-    String(now.getMonth() + 1).padStart(2, '0');
-
-  const anno =
-    now.getFullYear();
-
-  const ore =
-    String(now.getHours()).padStart(2, '0');
-
-  const minuti =
-    String(now.getMinutes()).padStart(2, '0');
-
-
-  const dataFormattata =
-    `${giorno}/${mese}/${anno}`;
-
-  const oraFormattata =
-    `${ore}:${minuti}`;
-
-console.log(dataFormattata);
-console.log(oraFormattata);
-
-  // =========================
-  // MESSAGGIO
-  // =========================
-
-  document
-    .getElementById("welcomeMessage")
-    .innerHTML =
-
-    `
-      Ciao
-      <b>${data.cognome} ${data.nome}</b>,
-      oggi è il
-      <b>${dataFormattata}</b>
-      e sono le
-      <b>${oraFormattata}</b>
-    `;
-
-}
-	
 	
 	
 	
 	showWelcomeMessage();
     caricaCitta();
 
-    async function caricaCitta() {
-      const { data, error } = await clientSupabase.from('citta').select('id, citta').order('citta');
-      if (error) return mostraMessaggio("Errore caricamento città", true);
-      
-      const select = document.getElementById('select-citta');
-      data.forEach(c => {
-        let opt = document.createElement('option');
-        opt.value = c.id;
-        opt.innerText = c.citta;
-        select.appendChild(opt);
-      });
-    }
 
-    async function gestisciCambioCitta() {
-      const idCitta = document.getElementById('select-citta').value;
-      const selectRes = document.getElementById('select-residenza');
-      const formDati = document.getElementById('form-dati-scheda');
-      
-      formDati.style.display = "none";
-      selectRes.innerHTML = '<option value="">-- Scegli Residenza --</option>';
-      
-      if (!idCitta) {
-        selectRes.disabled = true;
-        return;
-      }
 
-      const { data, error } = await clientSupabase.from('residenze').select('id, struttura, telefono, indirizzo, cap, localita').eq('id_citta', idCitta);
-      if (error) return mostraMessaggio("Errore caricamento residenze", true);
-
-      tutteLeResidenze = data;
-      data.forEach(r => {
-        let opt = document.createElement('option');
-        opt.value = r.id;
-        opt.innerText = r.struttura;
-        selectRes.appendChild(opt);
-      });
-      selectRes.disabled = false;
-    }
-
-    async function caricaDatiResidenzaSelezionata() {
-      const idResidenza = document.getElementById('select-residenza').value;
-      const formDati = document.getElementById('form-dati-scheda');
-      
-      if (!idResidenza) {
-	    document.getElementById('box-last-update').style.display = "none";
-        document.getElementById('box-telefono').style.display = "none";
-		document.getElementById('box-indirizzo').style.display = "none";
-		
-        formDati.style.display = "none";
-        return;
-      }
-
-      const boxTelefono = document.getElementById('box-telefono');
-      const testoTelefono = document.getElementById('testo-telefono');
-      
-      const residenzaSelezionata = tutteLeResidenze.find(r => r.id === parseInt(idResidenza));
-      
-      if (residenzaSelezionata && residenzaSelezionata.telefono) {
-        const numTel = residenzaSelezionata.telefono.trim();
-        testoTelefono.innerHTML = `<a href="tel:${numTel}" style="color: #0284c7; text-decoration: none;">${numTel} 📞 </a>`;
-        boxTelefono.style.display = "block";
-      } else {
-        testoTelefono.innerHTML = `<span style="color: #666; font-style: italic;">Nessun telefono registrato</span>`;
-        boxTelefono.style.display = "block";
-      }
-	  
-	  
-	  
-	  // 1. Seleziona gli elementi corretti presenti nel tuo HTML
-		const boxIndirizzo = document.querySelector('.address-box'); // Seleziona il div contenitore
-		const spanIndirizzo = document.getElementById('box-indirizzo'); // Lo span del testo
-		const mapsButton = document.getElementById('mapsButton'); // Il pulsante di Maps
-
-		if (residenzaSelezionata && residenzaSelezionata.indirizzo && residenzaSelezionata.cap && residenzaSelezionata.localita) {
-			const via = encodeURIComponent(residenzaSelezionata.indirizzo.trim());
-			const cap = encodeURIComponent(residenzaSelezionata.cap.trim());
-			const localita = encodeURIComponent(residenzaSelezionata.localita.trim());
-
-		  
-		  // 2. Aggiorna il testo visibile dell'indirizzo
-		   spanIndirizzo.textContent = residenzaSelezionata.indirizzo.trim() + ','+ residenzaSelezionata.cap.trim() + ','+ residenzaSelezionata.localita.trim();
-		  // 3. Genera l'URL dinamico codificato per Google Maps
-			const indirizzoCompleto = via + ','+ cap + ','+ localita;
-			// Sostituisce tutti gli spazi con il carattere '+'
-			const indirizzoFormattato = indirizzoCompleto.trim().replace(/\s+/g, '+');
-			// Assegna l'URL corretto al pulsante Maps
-			mapsButton.href = `https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}`;
-		  // 4. Mostra il contenitore dell'indirizzo
-		  boxIndirizzo.style.display = "block";
-		  
-		} else {
-		  // Se l'indirizzo manca, mostra un avviso o nascondi il box
-		  spanIndirizzo.innerHTML = `<span style="color: #666; font-style: italic;">Nessun indirizzo registrato</span>`;
-		  mapsButton.href = "#"; // Disabilita il link di Maps
-		}
-
-	  
-	  
-	  
-
-      schedaEsistenteId = null;
-      pianosCaricatiInMemoria = [];
-	  document.getElementById('check-mensa').checked = false;
-	  document.getElementById('check-spazi-esterni').checked = false;
-	  document.getElementById('check-spazi-comuni').checked = false;
-      document.getElementById('check-ascensore').checked = false;
-	  document.getElementById('check-montascale').checked = false;
-	  document.getElementById('check-montapersone').checked = false;
-      document.getElementById('check-rampa').checked = false;
-	  document.getElementById('input-num-ospiti').value = 1;
-	  document.getElementById('input-num-stanze').value = 1;
-	  document.getElementById('input-num-stanze-disabili').value = 0;
-      document.getElementById('input-piani').value = 1;
-
-      const { data: schedaData, error: schedaError } = await clientSupabase
-        .from('scheda_residenze')
-        .select('id, id_residenza, last_update, mensa, spazi_esterni, spazi_comuni, ascensore, montascale, montapersone, rampa, num_ospiti,num_stanze, num_stanze_disabili, piani, portineria')
-        .eq('id_residenza', idResidenza);
-
-      if (schedaError) return mostraMessaggio("Errore caricamento scheda: " + schedaError.message, true);
-
-      formDati.style.display = "block";
-
-      if (schedaData && schedaData.length > 0) {
-        const scheda = schedaData[0];
-        schedaEsistenteId = scheda.id;
-        console.log('mucci');
-		console.log(scheda.last_update);
-		console.log('mucci');
-
-		
-		const ts = scheda.last_update;
-		const date = new Date(ts);
-
-		const data_leggibile = new Intl.DateTimeFormat('it-IT', {
-		  day: '2-digit',
-		  month: '2-digit',
-		  year: '2-digit',
-		  hour: '2-digit',
-		  minute: '2-digit',
-		  hour12: false
-		}).format(date).replace(',', '');
-
-		console.log(data_leggibile);
-		
-		
-		if (scheda.last_update) {
-        const numTel = residenzaSelezionata.telefono.trim();
-        document.getElementById('testo-last-update').innerHTML = `<span style="color: #666; font-style: italic;">${data_leggibile} </span>`;
-        boxTelefono.style.display = "block";
-      } else {
-        document.getElementById('testo-last-update').innerHTML = `<span style="color: #666; font-style: italic;">Nessuna informazione registrata</span>`;
-        boxTelefono.style.display = "block";
-      }
-		
-		
-		
-		document.getElementById('box-last-update').style.display = "block";
-		document.getElementById('select-portineria').value = scheda.portineria;
-		document.getElementById('check-mensa').checked = scheda.mensa;
-		document.getElementById('check-spazi-esterni').checked = scheda.spazi_esterni;
-		document.getElementById('check-spazi-comuni').checked = scheda.spazi_comuni;
-        document.getElementById('check-ascensore').checked = scheda.ascensore;
-		document.getElementById('check-montascale').checked = scheda.montascale;
-		document.getElementById('check-montapersone').checked = scheda.montapersone;
-        document.getElementById('check-rampa').checked = scheda.rampa;
-		document.getElementById('input-num-ospiti').value = scheda.num_ospiti || 1;
-		document.getElementById('input-num-stanze').value = scheda.num_stanze || 1;
-		document.getElementById('input-num-stanze-disabili').value = scheda.num_stanze_disabili || 0;
-        document.getElementById('input-piani').value = scheda.piani || 1;
-
-        const { data: pianiData, error: pianiError } = await clientSupabase
-          .from('scheda_residenze_piani')
-          .select('*')
-          .eq('id_scheda_residenze', schedaEsistenteId)
-          .order('piano');
-
-        if (pianiError) console.warn("Errore caricamento piani correlati:", pianiError.message);
-
-        pianosCaricatiInMemoria = pianiData || [];
-        generaRighePiani(pianosCaricatiInMemoria);
-      } else {
-        generaRighePiani([]);
-      }
-    }
-
-    function generaRighePiani(pianiSalvati = []) {
-      const numPiani = parseInt(document.getElementById('input-piani').value) || 1;
-      const tbody = document.getElementById('corpo-tabella-piani');
-      tbody.innerHTML = '';
-
-      for (let i = 1; i <= numPiani; i++) {
-        const datiPiano = pianiSalvati.find(p => p.piano === i) || {};
-
-        const tr = document.createElement('tr');
-        tr.dataset.piano = i;
-
-        tr.innerHTML = `
-          <td><strong>Piano ${i}</strong></td>
-
-		  <td><input type="checkbox" class="piano-rampa" ${datiPiano.rampa ? 'checked' : ''} style="width:70px;"></td>
-		  <td>
-            <select class="piano-accessibile">
-              <option value="Sì" ${datiPiano.accessibile === 'Sì' ? 'selected' : ''}>Sì</option>
-              <option value="No" ${datiPiano.accessibile === 'No' ? 'selected' : ''}>No</option>
-              <option value="Parzialmente" ${datiPiano.accessibile === 'Parzialmente' ? 'selected' : ''}>Parzialmente</option>
-            </select>
-          </td>
-          <td><input type="number" class="piano-stanze" min="0" value="${datiPiano.num_camere ?? 0}" style="width:70px;"></td>
-          <td><input type="number" class="piano-stanze-acc" min="0" value="${datiPiano.num_camere_accessibili ?? 0}" style="width:70px;"></td>
-          <td><input type="text" class="piano-nota" value="${datiPiano.nota || ''}" placeholder="Eventuali note..." style="width:90%;"></td>
-        `;
-        tbody.appendChild(tr);
-      }
-    }
 	
-	function spaziEsterni() {
-
-	  // Recuperiamo lo stato del checkbox principale
-	  const spazi_esterni = document.getElementById('check-spazi-esterni').checked;
-	  
-	  // Usiamo l'ID corretto del contenitore principale
-	  const divContenitore = document.getElementById('sezione-spazi-esterni');
-	  
-	  
-	  // Logica per mostrare o nascondere in base al click
-	  if (spazi_esterni) {
-		divContenitore.style.display = "block"; // Mostra se selezionato
-	  } else {
-		divContenitore.style.display = "none";  // Nasconde se deselezionato
-	  }
-	}
 	
+// Lista delle 8 categorie richieste
+/*
+const CATEGORIE_STANZA = [
+  "Comfort acustico",
+  "Accessibilità generale",
+  "Comfort visivo",
+  "Comfort cognitivo",
+  "Arredi",
+  "Bagno",
+  "Tecnologia",
+  "Comfort sensoriale"
+];
+*/
 
-	function spaziComuni() {
-
-	  // Recuperiamo lo stato del checkbox principale
-	  const spazi_comuni = document.getElementById('check-spazi-comuni').checked;
-	  
-	  // Usiamo l'ID corretto del contenitore principale
-	  const divContenitore = document.getElementById('sezione-spazi-comuni');
-	  
-	  
-	  // Logica per mostrare o nascondere in base al click
-	  if (spazi_comuni) {
-		divContenitore.style.display = "block"; // Mostra se selezionato
-	  } else {
-		divContenitore.style.display = "none";  // Nasconde se deselezionato
-	  }
-	}
-
-
-
-    function rigeneraPianiVuoti() {
-      generaRighePiani(pianosCaricatiInMemoria);
-    }
-
-    async function salvaTutto() {
-      const idResidenzaVal = document.getElementById('select-residenza').value;
-	  const mensa = document.getElementById('check-mensa').checked;
-	  const spazi_esterni = document.getElementById('check-spazi-esterni').checked;
-	  const spazi_comuni = document.getElementById('check-spazi-comuni').checked;
-      const ascensore = document.getElementById('check-ascensore').checked;
-	  const montascale = document.getElementById('check-montascale').checked;
-	  const montapersone = document.getElementById('check-montapersone').checked;
-      const rampa = document.getElementById('check-rampa').checked;
-	  const num_ospiti = parseInt(document.getElementById('input-num-ospiti').value);
-	  const num_stanze = parseInt(document.getElementById('input-num-stanze').value);
-	  const num_stanze_disabili = parseInt(document.getElementById('input-num-stanze-disabili').value);
-      const piani = parseInt(document.getElementById('input-piani').value);
-	  const portineria = document.getElementById('select-portineria').value;
-
-      if (!idResidenzaVal) {
-        return mostraMessaggio("Seleziona prima una residenza.", true);
-      }
-
-      const idResidenzaId = parseInt(idResidenzaVal);
-
-      const datiSchedaGenerale = { 
-        id_residenza: idResidenzaId, 
-		portineria : portineria,
-		spazi_esterni : spazi_esterni,
-		spazi_comuni : spazi_comuni,
-		mensa: mensa, 
-        ascensore: ascensore, 
-		montascale: montascale, 
-		montapersone: montapersone, 
-        rampa: rampa, 
-		num_ospiti: num_ospiti,
-		num_stanze: num_stanze,
-		num_stanze_disabili: num_stanze_disabili,
-        piani: piani 
-      };
-
-      try {
-        let idSchedaReale = null;
-
-        const { data: schedaVerifica, error: erroreVerifica } = await clientSupabase
-          .from('scheda_residenze')
-          .select('id')
-          .eq('id_residenza', idResidenzaId);
-
-        if (erroreVerifica) throw erroreVerifica;
-
-        if (schedaVerifica && schedaVerifica.length > 0) {
-          idSchedaReale = schedaVerifica[0].id;
-          const { error: erroreUpdate } = await clientSupabase
-            .from('scheda_residenze')
-            .update(datiSchedaGenerale)
-            .eq('id', idSchedaReale);
-
-          if (erroreUpdate) throw erroreUpdate;
-        } else {
-          const { data: nuovaScheda, error: erroreInsert } = await clientSupabase
-            .from('scheda_residenze')
-            .insert(datiSchedaGenerale)
-            .select();
-
-          if (erroreInsert) throw erroreInsert;
-          idSchedaReale = nuovaScheda[0].id;
-        }
-
-        if (!idSchedaReale) throw new Error("ID scheda non valido.");
-
-        const righeTR = document.querySelectorAll('#corpo-tabella-piani tr');
-        
-        for (const tr of righeTR) {
-          const numeroPianoCorrente = parseInt(tr.dataset.piano);
-          const pianoEsistenteNelDB = pianosCaricatiInMemoria.find(p => p.piano === numeroPianoCorrente);
-
-          const datiSingoloPiano = {
-            id_scheda_residenze: idSchedaReale,
-            piano: numeroPianoCorrente,
-            accessibile: tr.querySelector('.piano-accessibile').value,
-			rampa: tr.querySelector('.piano-rampa').checked,
-            num_camere: parseInt(tr.querySelector('.piano-stanze').value) || 0,
-            num_camere_accessibili: parseInt(tr.querySelector('.piano-stanze-acc').value) || 0,
-            nota: tr.querySelector('.piano-nota').value
-          };
-          if (pianoEsistenteNelDB && pianoEsistenteNelDB.id) {
-            console.log(`Aggiorno piano ${numeroPianoCorrente} sulla riga ID: ${pianoEsistenteNelDB.id}`);
-            
-            const { error: errorUpdatePiano } = await clientSupabase
-              .from('scheda_residenze_piani')
-              .update(datiSingoloPiano)
-              .eq('id', pianoEsistenteNelDB.id);
-
-            if (errorUpdatePiano) throw errorUpdatePiano;
-
-          } else {
-            console.log(`Inserisco nuovo piano ${numeroPianoCorrente} per la scheda: ${idSchedaReale}`);
-            
-            const { error: errorInsertPiano } = await clientSupabase
-              .from('scheda_residenze_piani')
-              .insert(datiSingoloPiano);
-
-            if (errorInsertPiano) throw errorInsertPiano;
-          }
-        }
-
-        mostraMessaggio("Aggiornamento effettuato!", false);
-        await caricaDatiResidenzaSelezionata();
-
-      } catch (err) {
-        mostraMessaggio("Errore durante il salvataggio: " + err.message, true);
-        console.error("Dettaglio Errore:", err);
-      }
-    }
-
-    function mostraMessaggio(testo, isErrore) {
-      const box = document.getElementById('status-box');
-      box.innerText = testo;
-      box.style.display = "block";
-      box.style.backgroundColor = isErrore ? "#fee2e2" : "#dcfce7";
-      box.style.color = isErrore ? "#991b1b" : "#166534";
-      window.scrollTo(0, 0);
-    }
   </script>
+  
+  
+
+  
 </body>
 </html>
