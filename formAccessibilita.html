@@ -544,7 +544,7 @@ result = await clientSupabase
     let result;
 
 		result = await clientSupabase
-		  .from("scheda_residenze_piani")
+		  .from("piani")
 		  .upsert(payloadPiano, { onConflict: "id" });
   
 
