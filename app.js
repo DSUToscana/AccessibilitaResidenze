@@ -164,7 +164,7 @@ console.log(oraFormattata);
 
 
 // --------------------------------------------------
-// 1. CARICAMENTO DATI STANZE DAL DB (LEFT JOIN)
+// 1. CARICAMENTO DATI SCHEDA_STANZE DAL DB (LEFT JOIN)
 // --------------------------------------------------
 async function caricaDatiStanzeConValori(pianiIds) {
   if (!pianiIds || pianiIds.length === 0) return {};
@@ -173,7 +173,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
     .from('indicatori_facilitazioni')
     .select(`
       id, area, ambito, requisito, caratteristiche, disabilita, note,
-      stanze (
+      scheda_stanze (
 	    id,
         id_piano,
         nome_stanza,
@@ -193,7 +193,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
   // Mappa i valori salvati: mappaValori[idPiano][nomeStanza][idIndicatore] = { value: "...", nota: "..." }
   const mappaValori = {};
   data.forEach(item => {
-    const listaStanzeSalvate = item.stanze || [];
+    const listaStanzeSalvate = item.scheda_stanze || [];
     listaStanzeSalvate.forEach(s => {
 	  const id = s.id;
       const idPiano = s.id_piano;
