@@ -377,7 +377,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
         const { data: pianiData, error: pianiError } = await clientSupabase
           .from('piani')
           .select('*')
-          .eq('id_scheda_residenze', schedaEsistenteId)
+          .eq('id_residenza', schedaEsistenteId)
           .order('piano');
 
         if (pianiError) console.warn("Errore caricamento piani correlati:", pianiError.message);
@@ -516,7 +516,7 @@ async function salvaTutto() {
       const pianoEsistenteNelDB = pianosCaricatiInMemoria.find(p => p.piano === numeroPianoCorrente);
 
       const datiSingoloPiano = {
-        id_scheda_residenze: idSchedaReale,
+        id_residenza: idSchedaReale,
         piano: numeroPianoCorrente,
         accessibile: tr.querySelector('.piano-accessibile').value,
         rampa: tr.querySelector('.piano-rampa').checked,
