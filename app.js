@@ -547,7 +547,7 @@ async function salvaTutto() {
         mappaPianiId[numeroPianoCorrente] = pianoEsistenteNelDB.id;
 
       } else {
-        console.log(`Inserisco nuovo piano ${numeroPianoCorrente} per la scheda: ${idResidenzeId}`);
+        console.log(`Inserisco nuovo piano ${numeroPianoCorrente} per la scheda: ${idResidenzaId}`);
         
         // Aggiunto .select() per recuperare l'ID appena autogenerato
         const { data: nuovoPianoInserito, error: errorInsertPiano } = await clientSupabase
