@@ -374,6 +374,8 @@ async function caricaDatiStanzeConValori(pianiIds) {
 		document.getElementById('input-num-stanze-disabili').value = scheda.num_stanze_disabili || 0;
         document.getElementById('input-piani').value = scheda.piani || 1;
 
+		console.log("Mucci Recupero piani per idresidenza...", idResidenzaId);
+		  
         const { data: pianiData, error: pianiError } = await clientSupabase
           .from('piani')
           .select('*')
@@ -383,6 +385,9 @@ async function caricaDatiStanzeConValori(pianiIds) {
         if (pianiError) console.warn("Errore caricamento piani correlati:", pianiError.message);
 
         pianosCaricatiInMemoria = pianiData || [];
+
+console.log("Mucci Recupero piani per pianosCaricatiInMemoria...", pianosCaricatiInMemoria);
+		  
         generaRighePiani(pianosCaricatiInMemoria);
       } else {
         generaRighePiani([]);
