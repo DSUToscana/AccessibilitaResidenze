@@ -244,7 +244,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
 
 
 
-    async function caricaDatiResidenzaSelezionata() {
+    async function caricaDatiResidenzaSelezionataOLD() {
       const idResidenza = document.getElementById('select-residenza').value;
       const formDati = document.getElementById('form-dati-scheda');
       
