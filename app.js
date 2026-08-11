@@ -1,4 +1,4 @@
-async function showWelcomeMessage(){
+async function showWelcomeMessageOLD(){
 
   // =========================
   // UTENTE LOGGATO
@@ -112,7 +112,7 @@ console.log(oraFormattata);
 
 
 
-    async function caricaCitta() {
+    async function caricaCittaOLD() {
       const { data, error } = await clientSupabase.from('citta').select('id, citta').order('citta');
       if (error) return mostraMessaggio("Errore caricamento città", true);
       
@@ -125,7 +125,7 @@ console.log(oraFormattata);
       });
     }
 
-    async function gestisciCambioCitta() {
+    async function gestisciCambioCittaOLD() {
       const idCitta = document.getElementById('select-citta').value;
       const selectRes = document.getElementById('select-residenza');
       const formDati = document.getElementById('form-dati-scheda');
