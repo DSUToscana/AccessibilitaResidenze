@@ -97,7 +97,7 @@
             citta ( citta ),
             scheda_residenze (
               *,
-              scheda_residenze_piani ( * )
+              piani ( * )
             )
           `);
 
@@ -144,7 +144,7 @@
 
       residenze.forEach(residenza => {
         const scheda = Array.isArray(residenza.scheda_residenze) ? residenza.scheda_residenze[0] : residenza.scheda_residenze;
-        const pianos = (scheda && scheda.scheda_residenze_piani) ? scheda.scheda_residenze_piani : [];
+        const pianos = (scheda && scheda.piani) ? scheda.piani : [];
         const nomeCitta = residenza.citta ? residenza.citta.citta : (residenza.localita || 'N/D');
 
 
@@ -322,7 +322,7 @@ function renderTabellaCompleta(residenze){
 
     if(scheda){
        Object.assign(r, appiattisciOggetto(scheda,'scheda'));
-       const piani = scheda.scheda_residenze_piani || [];
+       const piani = scheda.piani || [];
        
        piani.forEach((p,i)=>{
          const campiConsentiti = ['piano', 'accessibile', 'num_camere', 'num_camere_accessibili', 'nota'];
