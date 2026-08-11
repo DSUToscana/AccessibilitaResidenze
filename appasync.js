@@ -10,8 +10,8 @@ async function caricaDatiStanzeConValori(pianiIds) {
     .from('indicatori_facilitazioni')
     .select(`
       id, area, ambito, requisito, caratteristiche, disabilita, note,
-      scheda_residenze_piani_stanze (
-        id_scheda_residenze_piani,
+      stanze (
+        id_piano,
         nome_stanza,
         value,
         nota
@@ -29,9 +29,9 @@ async function caricaDatiStanzeConValori(pianiIds) {
   // Mappa i valori salvati: mappaValori[idPiano][nomeStanza][idIndicatore] = { value: "...", nota: "..." }
   const mappaValori = {};
   data.forEach(item => {
-    const listaStanzeSalvate = item.scheda_residenze_piani_stanze || [];
+    const listaStanzeSalvate = item.stanze || [];
     listaStanzeSalvate.forEach(s => {
-      const idPiano = s.id_scheda_residenze_piani;
+      const idPiano = s.id_piano;
 
       // Filtriamo solo se appartiene ai piani che ci interessano
       if (pianiIds.includes(idPiano)) {
@@ -363,7 +363,7 @@ console.log(oraFormattata);
         document.getElementById('input-piani').value = scheda.piani || 1;
 
         const { data: pianiData, error: pianiError } = await clientSupabase
-          .from('scheda_residenze_piani')
+          .from('piani')
           .select('*')
           .eq('id_scheda_residenze', schedaEsistenteId)
           .order('piano');
