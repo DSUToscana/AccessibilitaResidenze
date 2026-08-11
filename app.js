@@ -531,6 +531,8 @@ async function salvaTutto() {
         nota: tr.querySelector('.piano-nota').value
       };
 
+	console.log("Mucci Inserimento datiPiano...", datiPiano);
+		
       if (pianoEsistenteNelDB && pianoEsistenteNelDB.id) {
         console.log(`Aggiorno piano ${numeroPianoCorrente} sulla riga ID: ${pianoEsistenteNelDB.id}`);
         
