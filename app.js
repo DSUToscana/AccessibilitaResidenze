@@ -461,7 +461,7 @@ async function salvaTutto() {
 
   const idResidenzaId = parseInt(idResidenzaVal);
 
-  const datiSchedaGenerale = { 
+  const datiSchedaResidenze = { 
     id_residenza: idResidenzaId, 
     portineria : portineria,
     spazi_esterni : spazi_esterni,
@@ -478,7 +478,7 @@ async function salvaTutto() {
   };
 
   try {
-    let idSchedaReale = null;
+    let idSchedaResidenzeId = null;
 
     const { data: schedaVerifica, error: erroreVerifica } = await clientSupabase
       .from('scheda_residenze')
@@ -488,25 +488,30 @@ async function salvaTutto() {
     if (erroreVerifica) throw erroreVerifica;
 
     if (schedaVerifica && schedaVerifica.length > 0) {
-      idSchedaReale = schedaVerifica[0].id;
+      idSchedaResidenzeId = schedaVerifica[0].id;
       const { error: erroreUpdate } = await clientSupabase
         .from('scheda_residenze')
-        .update(datiSchedaGenerale)
-        .eq('id', idSchedaReale);
+        .update(datiSchedaResidenze)
+        .eq('id', idSchedaResidenzeId);
 
       if (erroreUpdate) throw erroreUpdate;
     } else {
       const { data: nuovaScheda, error: erroreInsert } = await clientSupabase
         .from('scheda_residenze')
-        .insert(datiSchedaGenerale)
+        .insert(datiSchedaResidenze)
         .select();
 
       if (erroreInsert) throw erroreInsert;
-      idSchedaReale = nuovaScheda[0].id;
+      idSchedaResidenzeId = nuovaScheda[0].id;
     }
 
-    if (!idSchedaReale) throw new Error("ID scheda non valido.");
+    if (!idSchedaResidenzeId) throw new Error("ID scheda non valido.");
 
+
+
+	  
+
+	// piani
     const righeTR = document.querySelectorAll('#corpo-tabella-piani tr');
     
     // Mappa temporanea per associare l'indice/numero del piano al suo ID di database reale
@@ -516,7 +521,7 @@ async function salvaTutto() {
       const numeroPianoCorrente = parseInt(tr.dataset.piano);
       const pianoEsistenteNelDB = pianosCaricatiInMemoria.find(p => p.piano === numeroPianoCorrente);
 
-      const datiSingoloPiano = {
+      const datiPiano = {
         id_residenza: idResidenzaId,
         piano: numeroPianoCorrente,
         accessibile: tr.querySelector('.piano-accessibile').value,
@@ -531,7 +536,7 @@ async function salvaTutto() {
         
         const { error: errorUpdatePiano } = await clientSupabase
           .from('piani')
-          .update(datiSingoloPiano)
+          .update(datiPiano)
           .eq('id', pianoEsistenteNelDB.id);
 
         if (errorUpdatePiano) throw errorUpdatePiano;
@@ -540,12 +545,12 @@ async function salvaTutto() {
         mappaPianiId[numeroPianoCorrente] = pianoEsistenteNelDB.id;
 
       } else {
-        console.log(`Inserisco nuovo piano ${numeroPianoCorrente} per la scheda: ${idSchedaReale}`);
+        console.log(`Inserisco nuovo piano ${numeroPianoCorrente} per la scheda: ${idResidenzeId}`);
         
         // Aggiunto .select() per recuperare l'ID appena autogenerato
         const { data: nuovoPianoInserito, error: errorInsertPiano } = await clientSupabase
           .from('piani')
-          .insert(datiSingoloPiano)
+          .insert(datiPiano)
           .select();
 
         if (errorInsertPiano) throw errorInsertPiano;
@@ -555,9 +560,7 @@ async function salvaTutto() {
       }
     }
 	
-    // SALVATAGGIO DELLE STANZE E DEGLI INDICATORI
-    // Passiamo la mappa dei piani alla funzione di lettura del DOM
-	// SALVATAGGIO DELLE STANZE E DEGLI INDICATORI
+    // scheda_stanze
     const datiStanze = raccogliDatiStanzePerDB(mappaPianiId);
 
     // 1. Recuperiamo gli ID di tutti i piani salvati/aggiornati
