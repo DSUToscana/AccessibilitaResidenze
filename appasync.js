@@ -365,7 +365,7 @@ console.log(oraFormattata);
         const { data: pianiData, error: pianiError } = await clientSupabase
           .from('piani')
           .select('*')
-          .eq('id_scheda_residenze', schedaEsistenteId)
+          .eq('id_residenza', schedaEsistenteId)
           .order('piano');
 
         if (pianiError) console.warn("Errore caricamento piani correlati:", pianiError.message);
