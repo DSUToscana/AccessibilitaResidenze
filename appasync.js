@@ -11,7 +11,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
     .select(`
       id, area, ambito, requisito, caratteristiche, disabilita, note,
       scheda_stanze (
-        id_piano,
+        id_stanza,
         nome_stanza,
         value,
         nota
@@ -31,7 +31,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
   data.forEach(item => {
     const listaStanzeSalvate = item.scheda_stanze || [];
     listaStanzeSalvate.forEach(s => {
-      const idPiano = s.id_piano;
+      const idStanza = s.id_stanza;
 
       // Filtriamo solo se appartiene ai piani che ci interessano
       if (pianiIds.includes(idPiano)) {
