@@ -10,7 +10,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
     .from('indicatori_facilitazioni')
     .select(`
       id, area, ambito, requisito, caratteristiche, disabilita, note,
-      stanze (
+      scheda_stanze (
         id_piano,
         nome_stanza,
         value,
@@ -29,7 +29,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
   // Mappa i valori salvati: mappaValori[idPiano][nomeStanza][idIndicatore] = { value: "...", nota: "..." }
   const mappaValori = {};
   data.forEach(item => {
-    const listaStanzeSalvate = item.stanze || [];
+    const listaStanzeSalvate = item.scheda_stanze || [];
     listaStanzeSalvate.forEach(s => {
       const idPiano = s.id_piano;
 
