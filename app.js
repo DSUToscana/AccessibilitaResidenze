@@ -440,6 +440,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
 
 
 async function salvaTutto() {
+	// scheda_residenze
   const idResidenzaVal = document.getElementById('select-residenza').value;
   const mensa = document.getElementById('check-mensa').checked;
   const spazi_esterni = document.getElementById('check-spazi-esterni').checked;
@@ -516,7 +517,7 @@ async function salvaTutto() {
       const pianoEsistenteNelDB = pianosCaricatiInMemoria.find(p => p.piano === numeroPianoCorrente);
 
       const datiSingoloPiano = {
-        id_residenza: idSchedaReale,
+        id_residenza: idResidenzaId,
         piano: numeroPianoCorrente,
         accessibile: tr.querySelector('.piano-accessibile').value,
         rampa: tr.querySelector('.piano-rampa').checked,
