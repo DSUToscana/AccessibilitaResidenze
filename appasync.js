@@ -371,6 +371,10 @@ console.log(oraFormattata);
         if (pianiError) console.warn("Errore caricamento piani correlati:", pianiError.message);
 
         pianosCaricatiInMemoria = pianiData || [];
+
+		  
+		  console.log('mucci pianosCaricatiInMemoria', pianosCaricatiInMemoria);
+		  
         generaRighePiani(pianosCaricatiInMemoria);
       } else {
         generaRighePiani([]);
