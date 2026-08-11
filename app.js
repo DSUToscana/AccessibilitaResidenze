@@ -173,9 +173,9 @@ async function caricaDatiStanzeConValori(pianiIds) {
     .from('indicatori_facilitazioni')
     .select(`
       id, area, ambito, requisito, caratteristiche, disabilita, note,
-      scheda_residenze_piani_stanze (
+      stanze (
 	    id,
-        id_scheda_residenze_piani,
+        id_piano,
         nome_stanza,
         value,
         nota
@@ -193,10 +193,10 @@ async function caricaDatiStanzeConValori(pianiIds) {
   // Mappa i valori salvati: mappaValori[idPiano][nomeStanza][idIndicatore] = { value: "...", nota: "..." }
   const mappaValori = {};
   data.forEach(item => {
-    const listaStanzeSalvate = item.scheda_residenze_piani_stanze || [];
+    const listaStanzeSalvate = item.stanze || [];
     listaStanzeSalvate.forEach(s => {
 	  const id = s.id;
-      const idPiano = s.id_scheda_residenze_piani;
+      const idPiano = s.id_piano;
 
       // Filtriamo solo se appartiene ai piani che ci interessano
       if (pianiIds.includes(idPiano)) {
@@ -375,7 +375,7 @@ async function caricaDatiStanzeConValori(pianiIds) {
         document.getElementById('input-piani').value = scheda.piani || 1;
 
         const { data: pianiData, error: pianiError } = await clientSupabase
-          .from('scheda_residenze_piani')
+          .from('piani')
           .select('*')
           .eq('id_scheda_residenze', schedaEsistenteId)
           .order('piano');
@@ -529,7 +529,7 @@ async function salvaTutto() {
         console.log(`Aggiorno piano ${numeroPianoCorrente} sulla riga ID: ${pianoEsistenteNelDB.id}`);
         
         const { error: errorUpdatePiano } = await clientSupabase
-          .from('scheda_residenze_piani')
+          .from('piani')
           .update(datiSingoloPiano)
           .eq('id', pianoEsistenteNelDB.id);
 
@@ -543,7 +543,7 @@ async function salvaTutto() {
         
         // Aggiunto .select() per recuperare l'ID appena autogenerato
         const { data: nuovoPianoInserito, error: errorInsertPiano } = await clientSupabase
-          .from('scheda_residenze_piani')
+          .from('piani')
           .insert(datiSingoloPiano)
           .select();
 
@@ -565,9 +565,9 @@ async function salvaTutto() {
     if (arrayIdPiani.length > 0) {
       // 2. Cancelliamo i vecchi valori associati a questi piani per evitare duplicati o residui da rinomina
       const { error: errorDelete } = await clientSupabase
-        .from('scheda_residenze_piani_stanze')
+        .from('stanze')
         .delete()
-        .in('id_scheda_residenze_piani', arrayIdPiani);
+        .in('id_piano', arrayIdPiani);
 
       if (errorDelete) throw errorDelete;
     }
@@ -576,7 +576,7 @@ async function salvaTutto() {
     if (datiStanze.length > 0) {
       console.log("Inserimento nuovi indicatori stanze...", datiStanze);
       const { error: errorStanze } = await clientSupabase
-        .from('scheda_residenze_piani_stanze')
+        .from('stanze')
         .insert(datiStanze); // Semplice insert, niente upsert/onConflict!
 
       if (errorStanze) throw errorStanze;
@@ -1517,7 +1517,7 @@ function raccogliDatiStanzePerDB(mappaPianiId) {
       // Include il record solo se ha un valore selezionato o una nota compilata
       if ((valoreSelezionato && valoreSelezionato !== '') || notaTesto !== '') {
         listaRecord.push({
-          id_scheda_residenze_piani: idDatabasePiano,
+          id_piano: idDatabasePiano,
           nome_stanza: nomeStanza,
           id_indicatore_facilitazioni: idIndicatore,
           value: valoreSelezionato || null,
@@ -1666,7 +1666,7 @@ console.log("mucci idIndicatoreRaw: ", idIndicatoreRaw);
       // Salviamo il record se è stato selezionato un valore OPPURE se è stata scritta una nota
       if ((valoreSelezionato && valoreSelezionato !== '') || notaTesto !== '') {
         listaRecord.push({
-          id_scheda_residenze_piani: idDatabasePiano,
+          id_piano: idDatabasePiano,
           nome_stanza: nomeStanza,
           id_indicatore_facilitazioni: idIndicatore,
           value: valoreSelezionato || null,
