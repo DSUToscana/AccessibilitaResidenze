@@ -553,3 +553,15 @@
 }	
 	
 	
+	
+/* Nasconde il pulsante di copia solo nella prima stanza del contenitore */
+.nodo-stanza:first-child .btn-copia-stanza {
+  display: none !important;
+}	
+
+
+
+
+.nodo-spaziocomune:first-child .btn-copia-spaziocomune {
+  display: none !important;
+}	

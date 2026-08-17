@@ -99,69 +99,6 @@
 		 
 	  
 	  
-	  
-	  
-	  
-	  <!-- Checkbox Padre  Spazi Esterni-->
-		<label class="checkbox-label-padre" style="font-weight: bold; cursor: pointer;">
-		  <input type="checkbox" id="check-spazi-esterni" onchange="toggleSpaziEsterni()"> 
-		  Spazi Esterni
-		</label>
-
-		<!-- Sezione Figlio (Visibile solo se il padre è spuntato) -->
-		<div id="sezione-spazi-esterni" style="display: none; margin-top: 8px;">
-		  <details class="dropdown-multiselect">
-			<summary id="summary-spazi-esterni">Elementi Spazi Esterni:</summary>
-			<div class="opzioni-grid">
-			  <label><input type="checkbox" class="chk-servizio-esterno" value="Vialetti" onchange="aggiornaTestoSummary()"> Vialetti</label>
-			  <label><input type="checkbox" class="chk-servizio-esterno" value="Ghiaia" onchange="aggiornaTestoSummary()"> Ghiaia</label>
-			  <label><input type="checkbox" class="chk-servizio-esterno" value="Fontane" onchange="aggiornaTestoSummary()"> Fontane</label>
-			  <label><input type="checkbox" class="chk-servizio-esterno" value="Dislivelli" onchange="aggiornaTestoSummary()"> Dislivelli</label>
-			  <label><input type="checkbox" class="chk-servizio-esterno" value="Grigliati" onchange="aggiornaTestoSummary()"> Grigliati</label>
-			</div>
-		  </details>
-		</div>
-	  
-	  
-
-
-
-	  <!-- Checkbox Padre  Spazi Comuni-->
-		<label class="checkbox-label-padre" style="font-weight: bold; cursor: pointer;">
-		  <input type="checkbox" id="check-spazi-comuni" onchange="toggleSpaziComuni()"> 
-		  Spazi Comuni
-		</label>
-
-		<!-- Sezione Figlio (Visibile solo se il padre è spuntato) -->
-		<div id="sezione-spazi-comuni" style="display: none; margin-top: 8px;">
-		  <details class="dropdown-multiselect">
-			<summary id="summary-spazi-comuni">Elementi Spazi Comuni:</summary>
-			<div class="opzioni-grid">
-			  <label><input type="checkbox" class="chk-servizio-comune" value="SoloAlloggiati" onchange="aggiornaTestoComuniSummary()"> Solo Alloggiati</label>
-			  <label><input type="checkbox" class="chk-servizio-comune" value="SaleStudio" onchange="aggiornaTestoComuniSummary()"> Sale Studio</label>
-			  <label><input type="checkbox" class="chk-servizio-comune" value="Sale Cinema" onchange="aggiornaTestoComuniSummary()"> Sale Cinema</label>
-			  <label><input type="checkbox" class="chk-servizio-comune" value="SaleMusica" onchange="aggiornaTestoComuniSummary()"> Sale Musica</label>
-			  <label><input type="checkbox" class="chk-servizio-comune" value="Palestra" onchange="aggiornaTestoComuniSummary()"> Palestra</label>
-			</div>
-		  </details>
-		</div>
-
-
-
-
-<!--
-	<div id="sezione-spazi-comuni" style="display: none; width: max-content; align-items: center; white-space: nowrap;">
-	  <div class="table-responsive" id="dettaglio_spazi_comuni">
-		<label class="checkbox-label"><input type="checkbox" id="check-solo-alloggiati"> Solo Alloggiati</label>
-		<label class="checkbox-label"><input type="checkbox" id="check-sale-studio"> Sale Studio</label>
-		<label class="checkbox-label"><input type="checkbox" id="check-sale-cinema"> Sale Cinema</label>
-	  </div>
-	</div> 		
--->
-	
-	<!--	<label class="checkbox-label"><input type="checkbox" id="check-altro"> Altro</label>
-		<td><input type="text" class="spazi-comuni-nota" value="${datiPiano.nota || ''}" placeholder="Nota altro..." style="width:90%;"></td>  -->	
-		  
 		  
 		<div class="checkbox-group">
           <label class="checkbox-label">
@@ -194,6 +131,11 @@
         <label for="input-num-stanze-disabili">N Stanze Disabili Tot.</label>
         <input type="number" id="input-num-stanze-disabili" min="0" value="1">
       </div>
+	  
+	  <div class="form-group" style="max-width: 200px;">
+        <label for="input-num-spazi-comuni">N Spazi Comuni Tot.</label>
+        <input type="number" id="input-num-spazi-comuni" min="0" value="1">
+      </div>
 
       <div class="form-group" style="max-width: 200px;">
         <label for="input-piani">N Piani Totali</label>
@@ -213,6 +155,7 @@
                 <th>Accessibilità</th>
                 <th>Stanze Tot.</th>
                 <th>Stanze Access.</th>
+				<th>Spazi Comuni</th>
                 <th>Note</th>
               </tr>
             </thead>
@@ -228,6 +171,13 @@
 	  <h2>Dettaglio Stanze Accessibili</h2>
 	  <div id="contenitore-stanze"></div>
 	</div>
+
+	<!-- SEZIONE DINAMICA SPAZI COMUNI -->
+	<div id="sezione-dettaglio-spazi-comuni" style="display: none; margin-top: 30px;">
+	  <h2>Dettaglio Spazi Comuni</h2>
+	  <div id="contenitore-spazi-comuni"></div>
+	</div>
+
 
 
       <button class="btn-salva" onclick="salvaTutto()">SALVA DATI RESIDENZA</button>
