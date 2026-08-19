@@ -1,0 +1,8 @@
+ho la 
+tabella indicatori_facilitazioni, con campi id, area, ambito, requisito, caratteristiche, note, disabilita
+tabella citta, con campi id e citta;
+tabella residenze con id, id_citta (chiave esterna su citta) e altri campi;
+tabella scheda_residenze con id, id_residenza (chiave esterna su residenze) e altri campi;
+tabella piani con id, id_residenza (chiave esterna su residenze) e altri campi;
+tabella stanze con id, id_piano (chiave esterna su piani) , nome e nota;
+tabella scheda_stanze con id, id_stanza (chiave esterna su stanze), id_indicatore_facilitazioni (chiave esterna su indicatori_facilitazioni), value e nota;

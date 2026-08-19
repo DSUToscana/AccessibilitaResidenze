@@ -3,406 +3,819 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestione Residenze - Filtro Città</title>
+  <title>Accessibilita e Fruibilita</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">  <!-- CSS DataTables Buttons -->
   <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.dataTables.min.css">
 
   <link rel="stylesheet" href="stile.css"> 
-   
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-  
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.dataTables.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+
+
+	<!-- JS DataTables Buttons & Dipendenze per Excel/CSV -->
+	<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+
+
+  <link rel="stylesheet" href="stileindex.css">
 </head>
 <body>
 
   <div class="container">
     <h1>Elenco Residenze</h1>
 
-    <div class="filter-bar">
-      <label for="filtro-citta">Filtra per Città:</label>
-      <select id="filtro-citta" onchange="applicaFiltro()">
-        <option value="tutte">Tutte le città</option>
-      </select>
+    <div class="filtri-container" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+      <!-- 1. Filtro Città -->
+      <div>
+        <label for="filtro-citta">Città:</label>
+        <select id="filtro-citta" onchange="applicaFiltro()">
+          <option value="tutte">Tutte le città</option>
+        </select>
+      </div>
 
-      <button id="btnVistaCompleta" onclick="mostraVistaCompleta()">📊 Lista</button>
-      <button id="btnVistaNormale" onclick="ripristinaVistaNormale()" style="display:none;">↩️ Card</button>
-    </div>
-    
-    <div id="lista-residenze" class="residenze-grid">
+      <!-- 2. Filtro Disabilità -->
+      <div>
+        <label for="filtro-disabilita">Disabilità:</label>
+        <select id="filtro-disabilita" onchange="applicaFiltro()">
+          <option value="tutte">Tutte le disabilità</option>
+        </select>
+      </div>
+
+      <!-- 3. Filtro Valore Indicatore -->
+      <div>
+        <label for="filtro-valore">Valore Indicatore:</label>
+        <select id="filtro-valore" onchange="applicaFiltro()">
+          <option value="tutti">Tutti i valori</option>
+          <option value="Conforme / Presente">Conforme / Presente</option>
+          <option value="Non Conforme">Non Conforme</option>
+          <option value="Parzialmente Conforme">Parzialmente Conforme</option>
+          <option value="Non Applicabile">Non Applicabile</option>
+        </select>
+      </div>
+      
+      <button id="btnVistaTabella" onclick="mostraTabella()">📊 Tabella</button>
+      <button id="btnVistaCard" onclick="mostraCard()" style="display:none;">🎴 Card</button>
+    </div>	
+
+    <div id="lista-residenze">
       <div class="status-msg">Inizializzazione in corso...</div>
     </div>
   </div>
 
   <script>
-    // =========================
-    // CONFIG SUPABASE
-    // =========================
-    const SUPABASE_URL = "https://hrqztgddqmwtljafqahn.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
-      
-    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// =========================
+// CONFIG SUPABASE
+// =========================
+const SUPABASE_URL = "https://hrqztgddqmwtljafqahn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
+  
+const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Variabile globale per tenere in memoria tutte le residenze scaricate
-    let tutteLeResidenze = [];
+let tutteLeResidenzeRaw = [];
+let tutteLeStanzeRaw = [];
+let tuttiGliSpaziComuniRaw = [];
+let vistaResidenzeCompletaRaw = [];
 
-    // Funzione principale che coordina i caricamenti all'avvio
-    async function inizializzaPagina() {
-      await caricaMenuCitta();
-      await fetchResidenze();
+async function inizializzaPagina() {
+  await caricaMenuCitta();
+  await caricaMenuDisabilita(); 
+  await fetchTuttiIDati();
+}
+
+async function caricaMenuCitta() {
+  try {
+    const { data: citta, error } = await clientSupabase
+      .from('citta')
+      .select('id, citta')
+      .order('citta', { ascending: true });
+
+    if (error) throw error;
+
+    const select = document.getElementById('filtro-citta');
+    citta.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.innerText = c.citta;
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Errore nel caricamento delle città:", err.message);
+  }
+}
+
+async function caricaMenuDisabilita() {
+  try {
+    const { data: disabilita, error } = await clientSupabase
+      .from('v_elenco_disabilita')
+      .select('disabilita') 
+      .order('disabilita', { ascending: true });
+
+    if (error) throw error;
+
+    const select = document.getElementById('filtro-disabilita');
+    disabilita.forEach(d => {
+      if (!d.disabilita) return;
+      const opt = document.createElement('option');
+      opt.value = d.disabilita.trim();
+      opt.innerText = d.disabilita.trim();
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Errore nel caricamento del menu disabilità:", err.message);
+  }
+}
+
+// ============================================================
+// CARICAMENTO PARALLELO DELLE VISTE
+// ============================================================
+async function fetchTuttiIDati() {
+  try {
+    const [resResidenze, resStanze, resSpazi, resCompleta] = await Promise.all([
+      clientSupabase.from('v_residenze').select('*'),
+      clientSupabase.from('v_stanze').select('*'),
+      clientSupabase.from('v_spazicomuni').select('*'),
+      clientSupabase.from('v_residenze_completa').select('*')
+    ]);
+
+    if (resResidenze.error) throw resResidenze.error;
+    if (resStanze.error) throw resStanze.error;
+    if (resSpazi.error) throw resSpazi.error;
+    if (resCompleta.error) throw resCompleta.error;
+
+    tutteLeResidenzeRaw = resResidenze.data || [];
+    tutteLeStanzeRaw = resStanze.data || [];
+    tuttiGliSpaziComuniRaw = resSpazi.data || [];
+    vistaResidenzeCompletaRaw = resCompleta.data || [];
+
+    applicaFiltro();
+
+  } catch (err) {
+    document.getElementById('lista-residenze').innerHTML = 
+      `<div class="status-msg" style="color: red;">Errore nel caricamento dati: ${err.message}</div>`;
+  }
+}
+
+// ============================================================
+// COMPOSIZIONE DELL'ALBERO IN MEMORIA (PER CARD)
+// ============================================================
+function assemblaAlberoResidenze(residenzeGrezze, stanzeGrezze, spaziGrezzi) {
+  const mappaResidenze = {};
+
+  residenzeGrezze.forEach(riga => {
+    const idRes = riga.id_residenza || riga.struttura;
+    if (!idRes) return;
+
+    if (!mappaResidenze[idRes]) {
+      mappaResidenze[idRes] = {
+        id_residenza: riga.id_residenza,
+        struttura: riga.struttura,
+        telefono: riga.telefono,
+        email: riga.email,
+        indirizzo: riga.indirizzo,
+        cap: riga.cap,
+        localita: riga.localita,
+        citta: riga.citta,
+        id_citta: riga.id_citta,
+        scheda: {
+          portineria: riga.portineria,
+          ascensore: riga.ascensore,
+          rampa: riga.rampa_struttura,
+          montascale: riga.montascale,
+          montapersone: riga.montapersone,
+          mensa: riga.mensa,
+          piani: riga.piani,
+          num_stanze: riga.num_stanze,
+          num_stanze_disabili: riga.num_stanze_disabili,
+          spazi_comuni_struttura: riga.spazi_comuni_struttura
+        },
+        pianiMap: {}
+      };
     }
 
-    // 2. FUNZIONE PER POPOLARE IL SELECT DELLE CITTÀ
-    async function caricaMenuCitta() {
-      try {
-        const { data: citta, error } = await clientSupabase
-          .from('citta')
-          .select('id, citta')
-          .order('citta', { ascending: true });
-
-        if (error) throw error;
-
-        const select = document.getElementById('filtro-citta');
-        citta.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.id;
-          opt.innerText = c.citta;
-          select.appendChild(opt);
-        });
-
-      } catch (err) {
-        console.error("Errore nel caricamento delle città:", err.message);
+    const idPiano = riga.id_piano;
+    if (idPiano) {
+      if (!mappaResidenze[idRes].pianiMap[idPiano]) {
+        mappaResidenze[idRes].pianiMap[idPiano] = {
+          id_piano: idPiano,
+          piano: riga.piano,
+          accessibile: riga.accessibile,
+          rampa: riga.rampa_piano,
+          num_camere: riga.num_camere,
+          num_camere_accessibili: riga.num_camere_accessibili,
+          spazi_comuni_piano: riga.spazi_comuni_piano,
+          nota: riga.nota_piano,
+          stanzeMap: {},
+          spaziComuniMap: {}
+        };
       }
     }
-
-    // 3. RECUPERO DATI CON RELAZIONE CITTÀ INCLUSA
-    async function fetchResidenze() {
-      try {
-        const { data, error } = await clientSupabase
-          .from('residenze')
-          .select(`
-            id,
-            struttura,
-            indirizzo,
-			cap,
-            localita,
-            telefono,
-            id_citta,
-            citta ( citta ),
-            scheda_residenze (
-              *,
-              piani ( * )
-            )
-          `);
-
-        if (error) {
-          document.getElementById('lista-residenze').innerHTML = `<div class="status-msg" style="color: red;">Errore: ${error.message}</div>`;
-          return;
-        }
-
-        tutteLeResidenze = data;
-        renderResidenze(tutteLeResidenze);
-
-      } catch (err) {
-        document.getElementById('lista-residenze').innerHTML = `<div class="status-msg" style="color: red;">Errore JS: ${err.message}</div>`;
-      }
-    }
-
-    // 4. FUNZIONE CHE FILTRA I DATI IN LOCALE
-    function applicaFiltro() {
-      const idCittaSelezionata = document.getElementById('filtro-citta').value;
-      const inVistaTabella = document.getElementById('btnVistaNormale').style.display === 'inline-block';
-
-      // Filtriamo l'array in base alla città
-      const datiFiltrati = idCittaSelezionata === "tutte" 
-        ? tutteLeResidenze 
-        : tutteLeResidenze.filter(r => String(r.id_citta) === String(idCittaSelezionata));
-
-      // Se siamo in vista tabella, aggiorniamo la tabella completa dinamica
-      if (inVistaTabella) {
-        renderTabellaCompleta(datiFiltrati);
-      } else {
-        renderResidenze(datiFiltrati);
-      }
-    }
-
-    // 5. FUNZIONE DI RENDERING DELLE CARD
-    function renderResidenze(residenze) {
-      const container = document.getElementById('lista-residenze');
-      container.innerHTML = ''; 
-
-      if (!residenze || residenze.length === 0) {
-        container.innerHTML = '<div class="status-msg">Nessuna residenza trovata per i criteri selezionati.</div>';
-        return;
-      }
-
-      residenze.forEach(residenza => {
-        const scheda = Array.isArray(residenza.scheda_residenze) ? residenza.scheda_residenze[0] : residenza.scheda_residenze;
-        const pianos = (scheda && scheda.piani) ? scheda.piani : [];
-        const nomeCitta = residenza.citta ? residenza.citta.citta : (residenza.localita || 'N/D');
-
-
-		const via = encodeURIComponent(residenza.indirizzo.trim());
-		const cap = encodeURIComponent(residenza?.cap?.trim() || "");
-		const localita = encodeURIComponent(residenza.localita.trim());
-		const indirizzoCompleto = via + ','+ cap + ','+ localita;
-			// Sostituisce tutti gli spazi con il carattere '+'
-		const indirizzoFormattato = indirizzoCompleto.trim().replace(/\s+/g, '+');
-
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        let schedaHTML = '';
-        if (scheda) {
-          const formattaBooleano = (v) => v === true ? 'Sì' : (v === false ? 'No' : v || 'N/D');
-          schedaHTML = `
-            <div class="scheda-box">
-              <h3>Dati Scheda Generale</h3>
-              <div class="info-line"><strong>Piani dell'edificio:</strong> ${scheda.piani || 'N/D'}</div>
-              <div class="info-line"><strong>Ascensore:</strong> ${formattaBooleano(scheda.ascensore)}</div>
-              <div class="info-line"><strong>Rampa:</strong> ${formattaBooleano(scheda.rampa)}</div>
-            </div>
-          `;
-        }
-
-        let pianosHTML = '';
-        if (pianos.length > 0) {
-          pianos.sort((a, b) => a.piano - b.piano);
-          let righeTabella = '';
-          pianos.forEach(p => {
-            righeTabella += `
-              <tr>
-                <td><strong>Piano ${p.piano}</strong></td>
-                <td>${p.accessibile || 'N/D'}</td>
-                <td>${p.num_camere ?? 0}</td>
-                <td>${p.num_camere_accessibili ?? 0}</td>
-                <td style="font-style:italic; color:#666;">${p.nota || '-'}</td>
-              </tr>
-            `;
-          });
-
-          pianosHTML = `
-            <button class="btn-espandi" onclick="togglePiani(this)">+ Vedi Dettaglio Piani (${pianos.length})</button>
-            <div class="piani-container">
-              <table class="tabella-piani">
-                <thead>
-                  <tr>
-                    <th>Piano</th>
-                    <th>Access.</th>
-                    <th>Stanze Tot.</th>
-                    <th>Stanze Access.</th>
-                    <th>Note</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${righeTabella}
-                </tbody>
-              </table>
-            </div>
-          `;
-        } else {
-          pianosHTML = `<div class="info-line" style="color:#888; font-style:italic; margin-top:15px; text-align:center;">Nessun piano registrato</div>`;
-        }
-
-
-		
-
-        card.innerHTML = `
-          <h2 style="margin-top:0;">${residenza.struttura || 'Senza nome'}</h2>
-          <div class="info-line"><strong>Indirizzo:</strong> ${residenza.indirizzo || 'N/D'}
-			<a id="mapsButton" href="https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}" target="_blank" style="text-decoration: none; font-size: 1.2em; border: none; background: transparent;">📍</a>
-		  </div>
-		  <div class="info-line"><strong>Cap:</strong> ${residenza.cap || 'N/D'}</div>
-          <div class="info-line"><strong>Città / Località:</strong> ${nomeCitta}
-			</div>
-		  <div class="info-line"><strong>Tel:</strong> 
-			<a href="tel:${residenza.telefono || 'N/D'}" style="color: #0284c7; text-decoration: none;">${residenza.telefono || 'N/D'} 📞 </a>
-		  </div>
-          ${schedaHTML}
-          ${pianosHTML}
-        `;
-
-        container.appendChild(card);
-      });
-    }
-
-    function togglePiani(bottone) {
-      const container = bottone.nextElementSibling;
-      const eAperto = container.classList.toggle('mostra');
-      if (eAperto) {
-        bottone.innerText = bottone.innerText.replace('+', '-').replace('Vedi', 'Nascondi');
-      } else {
-        bottone.innerText = bottone.innerText.replace('-', '+').replace('Nascondi', 'Vedi');
-      }
-    }
-
-    // questa funzione attiva la super-tabella dinamica con tutti i campi
-    function mostraVistaCompleta() {
-      document.getElementById('btnVistaCompleta').style.display = 'none';
-      document.getElementById('btnVistaNormale').style.display = 'inline-block';
-      
-      const contenitore = document.getElementById('lista-residenze');
-      contenitore.classList.remove('residenze-grid');
-      
-      // Calcola i dati filtrati attuali e renderizza la mega tabella
-      const idCittaSelezionata = document.getElementById('filtro-citta').value;
-      const datiDaMostrare = idCittaSelezionata === "tutte" 
-        ? tutteLeResidenze 
-        : tutteLeResidenze.filter(r => String(r.id_citta) === String(idCittaSelezionata));
-        
-      renderTabellaCompleta(datiDaMostrare);
-    }
-
-    function ripristinaVistaNormale() {
-      document.getElementById('btnVistaCompleta').style.display = 'inline-block';
-      document.getElementById('btnVistaNormale').style.display = 'none';
-      
-      const contenitore = document.getElementById('lista-residenze');
-      contenitore.classList.add('residenze-grid');
-      
-      applicaFiltro();
-    }
-
-    // FUNZIONI DI APPIATTIMENTO E RENDERING DELLA SUPER TABELLA (Invariate e collegate)
-    function appiattisciOggetto(obj, prefisso=''){
-      let r={};
-      for(const k in obj){
-        const v=obj[k];
-        const nk=prefisso?`${prefisso}_${k}`:k;
-        if(v && typeof v==='object' && !Array.isArray(v)){
-           Object.assign(r, appiattisciOggetto(v,nk));
-        } else {
-           r[nk]=v;
-        }
-      }
-      return r;
-    }
-
-
-
-function renderTabellaCompleta(residenze){
-  const righe=[];
-
-  residenze.forEach(x=>{
-    // --- Preparazione indirizzo formattato per Google Maps ---
-    const via = encodeURIComponent((x.indirizzo || '').trim());
-    const cap = encodeURIComponent((x.cap || '').trim());
-    const localita = encodeURIComponent((x.localita || '').trim());
-    const indirizzoCompleto = [via, cap, localita].filter(Boolean).join(',');
-    const indirizzoFormattato = indirizzoCompleto.replace(/\s+/g, '+');
-
-    // --- Generazione Link HTML ---
-    const indirizzoHTML = x.indirizzo ? 
-      `${x.indirizzo} <a href="https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; font-size:1.1em;">📍</a>` 
-      : '';
-
-    const telefonoHTML = x.telefono ? 
-      `<a href="tel:${x.telefono.replace(/\s+/g, '')}" style="color: #0284c7; text-decoration: none;">${x.telefono} 📞</a>` 
-      : '';
-
-    const r={
-       id: x.id,
-       struttura: x.struttura,
-       indirizzo: indirizzoHTML, // Inseriamo il codice HTML con il link a Google Maps
-       cap: x.cap,
-       localita: x.localita,
-       telefono: telefonoHTML,   // Inseriamo il codice HTML con il link per chiamare
-       citta: x.citta?.citta || ''
-    };
-
-    const scheda = Array.isArray(x.scheda_residenze)
-       ? x.scheda_residenze[0]
-       : x.scheda_residenze;
-
-    if(scheda){
-       Object.assign(r, appiattisciOggetto(scheda,'scheda'));
-       const piani = scheda.piani || [];
-       
-       piani.forEach((p,i)=>{
-         const campiConsentiti = ['piano', 'accessibile', 'num_camere', 'num_camere_accessibili', 'nota'];
-         
-         campiConsentiti.forEach(c => {
-           if (p[c] !== undefined) {
-             r[`piano_${i}_${c}`] = p[c];
-           }
-         });
-       });
-    }
-    righe.push(r);
   });
 
-  const colonne = [...new Set(righe.flatMap(x=>Object.keys(x)))];
+  const mappaPianiGlobali = {};
+  Object.values(mappaResidenze).forEach(res => {
+    Object.values(res.pianiMap).forEach(piano => {
+      mappaPianiGlobali[piano.id_piano] = piano;
+    });
+  });
 
+  stanzeGrezze.forEach(rigaStanza => {
+    const pianoObj = mappaPianiGlobali[rigaStanza.id_piano];
+    if (!pianoObj) return;
+
+    const idStanza = rigaStanza.id_stanza || rigaStanza.stanza;
+    if (!idStanza) return;
+
+    if (!pianoObj.stanzeMap[idStanza]) {
+      pianoObj.stanzeMap[idStanza] = {
+        id_stanza: rigaStanza.id_stanza,
+        stanza: rigaStanza.stanza,
+        nota: rigaStanza.nota_stanza,
+        areeMap: {}
+      };
+    }
+
+    const stObj = pianoObj.stanzeMap[idStanza];
+    const area = rigaStanza.area_indicatore_stanza;
+    const ambito = rigaStanza.ambito_indicatore_stanza;
+    const requisito = rigaStanza.requisito_indicatore_stanza;
+
+    if (area && ambito && requisito) {
+      if (!stObj.areeMap[area]) stObj.areeMap[area] = {};
+      if (!stObj.areeMap[area][ambito]) stObj.areeMap[area][ambito] = [];
+
+      stObj.areeMap[area][ambito].push({
+        requisito: requisito,
+        valore: rigaStanza.valore_indicatore_stanza,
+        nota: rigaStanza.nota_indicatore_stanza
+      });
+    }
+  });
+
+  spaziGrezzi.forEach(rigaSpazio => {
+    const pianoObj = mappaPianiGlobali[rigaSpazio.id_piano];
+    if (!pianoObj) return;
+
+    const idSpazio = rigaSpazio.id_stanza || rigaSpazio.spaziocomune;
+    if (!idSpazio) return;
+
+    if (!pianoObj.spaziComuniMap[idSpazio]) {
+      pianoObj.spaziComuniMap[idSpazio] = {
+        id_spaziocomune: idSpazio,
+        spaziocomune: rigaSpazio.spaziocomune,
+        nota: rigaSpazio.nota_spaziocomune,
+        areeMap: {}
+      };
+    }
+
+    const spObj = pianoObj.spaziComuniMap[idSpazio];
+    const area = rigaSpazio.area_indicatore_spaziocomune;
+    const ambito = rigaSpazio.ambito_indicatore_spaziocomune;
+    const requisito = rigaSpazio.requisito_indicatore_spaziocomune;
+
+    if (area && ambito && requisito) {
+      if (!spObj.areeMap[area]) spObj.areeMap[area] = {};
+      if (!spObj.areeMap[area][ambito]) spObj.areeMap[area][ambito] = [];
+
+      spObj.areeMap[area][ambito].push({
+        requisito: requisito,
+        valore: rigaSpazio.valore_indicatore_spaziocomune,
+        nota: rigaSpazio.nota_indicatore_spaziocomune
+      });
+    }
+  });
+
+  return Object.values(mappaResidenze).map(res => {
+    res.piani = Object.values(res.pianiMap).map(piano => {
+      piano.stanze = Object.values(piano.stanzeMap);
+      piano.spaziComuni = Object.values(piano.spaziComuniMap);
+      delete piano.stanzeMap;
+      delete piano.spaziComuniMap;
+      return piano;
+    });
+    delete res.pianiMap;
+    return res;
+  });
+}
+
+// ============================================================
+// APPLICAZIONE FILTRI PER ENTRAMBE LE VISTE
+// ============================================================
+
+
+
+function applicaFiltro() {
+  const selectCitta = document.getElementById('filtro-citta');
+  const idCittaSelezionata = selectCitta.value;
+  const nomeCittaSelezionata = selectCitta.options[selectCitta.selectedIndex] 
+    ? selectCitta.options[selectCitta.selectedIndex].text.trim().toLowerCase() 
+    : '';
+  
+  const disabilitaSelezionata = document.getElementById('filtro-disabilita').value.trim().toLowerCase();
+  const valoreSelezionato = document.getElementById('filtro-valore').value.trim().toLowerCase();
+  
+  const inVistaTabella = document.getElementById('btnVistaCard').style.display === 'inline-block';
+
+  if (inVistaTabella) {
+    // --------------------------------------------------------
+    // FILTRAGGIO VISTA TABELLA (v_residenze_completa)
+    // --------------------------------------------------------
+    const tabellaFiltrata = vistaResidenzeCompletaRaw.filter(riga => {
+      
+      // 1. Filtro Città (Controlla id_citta o fallback sul nome della città)
+      let matchCitta = true;
+      if (idCittaSelezionata !== "tutte") {
+        if (riga.id_citta !== undefined && riga.id_citta !== null) {
+          matchCitta = String(riga.id_citta) === String(idCittaSelezionata);
+        } else if (riga.citta) {
+          matchCitta = riga.citta.trim().toLowerCase() === nomeCittaSelezionata;
+        }
+      }
+
+      // 2. Filtro Valore Indicatore
+      let matchValore = true;
+      if (valoreSelezionato !== "tutti") {
+        const valCamp = (riga.valore_indicatore || '').toString().trim().toLowerCase();
+        matchValore = (valCamp === valoreSelezionato);
+      }
+
+      // 3. Filtro Disabilità
+      let matchDisabilita = true;
+      if (disabilitaSelezionata !== "tutte") {
+        const disCamp = (riga.disabilita_indicatore || '').toString().toLowerCase();
+        matchDisabilita = disCamp.includes(disabilitaSelezionata);
+      }
+
+      return matchCitta && matchValore && matchDisabilita;
+    });
+
+    renderTabellaCompleta(tabellaFiltrata);
+
+  } else {
+    // --------------------------------------------------------
+    // FILTRAGGIO VISTA CARD
+    // --------------------------------------------------------
+    const stanzeFiltrate = tutteLeStanzeRaw.filter(st => {
+      const disabilitaCampo = (st.disabilita_indicatore_stanza || '').toLowerCase();
+      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
+
+      const valoreCampo = (st.valore_indicatore_stanza || '').trim().toLowerCase();
+      const matchValore = (valoreSelezionato === "tutti" || valoreCampo === valoreSelezionato);
+
+      return matchDisabilita && matchValore;
+    });
+
+    const spaziFiltrati = tuttiGliSpaziComuniRaw.filter(sp => {
+      const disabilitaCampo = (sp.disabilita_indicatore_spazicomuni || '').toLowerCase();
+      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
+
+      const valoreCampo = (sp.valore_indicatore_spaziocomune || '').trim().toLowerCase();
+      const matchValore = (valoreSelezionato === "tutti" || valoreCampo === valoreSelezionato);
+
+      return matchDisabilita && matchValore;
+    });
+
+    const idPianiValidi = new Set([
+      ...stanzeFiltrate.map(st => st.id_piano),
+      ...spaziFiltrati.map(sp => sp.id_piano)
+    ]);
+
+    const residenzeFiltrate = tutteLeResidenzeRaw.filter(res => {
+      const matchCitta = (idCittaSelezionata === "tutte" || String(res.id_citta) === String(idCittaSelezionata));
+      
+      if (disabilitaSelezionata === "tutte" && valoreSelezionato === "tutti") {
+        return matchCitta;
+      }
+
+      const haPianoCompatibile = idPianiValidi.has(res.id_piano);
+      return matchCitta && haPianoCompatibile;
+    });
+
+    const alberoStrutturato = assemblaAlberoResidenze(residenzeFiltrate, stanzeFiltrate, spaziFiltrati);
+    renderResidenze(alberoStrutturato);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function applicaFiltroOLD() {
+  const selectCitta = document.getElementById('filtro-citta');
+  const idCittaSelezionata = selectCitta.value;
+  const nomeCittaSelezionata = selectCitta.options[selectCitta.selectedIndex] ? selectCitta.options[selectCitta.selectedIndex].text.trim().toLowerCase() : '';
+  
+  const disabilitaSelezionata = document.getElementById('filtro-disabilita').value.toLowerCase();
+  const valoreSelezionato = document.getElementById('filtro-valore').value;
+  const inVistaTabella = document.getElementById('btnVistaCard').style.display === 'inline-block';
+
+  if (inVistaTabella) {
+    // --------------------------------------------------------
+    // FILTRAGGIO PER LA VISTA TABELLA (v_residenze_completa)
+    // --------------------------------------------------------
+    const tabellaFiltrata = vistaResidenzeCompletaRaw.filter(riga => {
+      // 1. Filtro Città (via ID se presente, altrimenti via Testo)
+      let matchCitta = true;
+      if (idCittaSelezionata !== "tutte") {
+        if (riga.id_citta !== undefined && riga.id_citta !== null) {
+          matchCitta = String(riga.id_citta) === String(idCittaSelezionata);
+        } else if (riga.citta) {
+          matchCitta = riga.citta.toLowerCase() === nomeCittaSelezionata;
+        }
+      }
+
+      // 2. Filtro Valore Indicatore
+      const valCampo = (riga.valore_indicatore || '').trim().toLowerCase();
+      const matchValore = (valoreSelezionato === "tutti" || valCampo === valoreSelezionato.trim().toLowerCase());
+
+      // 3. Filtro Disabilità (se il campo è presente nella vista)
+      const disabilitaCampo = (riga.disabilita || riga.disabilita_indicatore || '').toLowerCase();
+      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
+
+      return matchCitta && matchValore && matchDisabilita;
+    });
+
+    renderTabellaCompleta(tabellaFiltrata);
+
+  } else {
+    // --------------------------------------------------------
+    // FILTRAGGIO PER LA VISTA CARD
+    // --------------------------------------------------------
+    const stanzeFiltrate = tutteLeStanzeRaw.filter(st => {
+      const disabilitaCampo = (st.disabilita_indicatore_stanza || '').toLowerCase();
+      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
+
+      const valoreCampo = (st.valore_indicatore_stanza || '').trim();
+      const matchValore = (valoreSelezionato === "tutti" || valoreCampo.toLowerCase() === valoreSelezionato.trim().toLowerCase());
+
+      return matchDisabilita && matchValore;
+    });
+
+    const spaziFiltrati = tuttiGliSpaziComuniRaw.filter(sp => {
+      const disabilitaCampo = (sp.disabilita_indicatore_spazicomuni || '').toLowerCase();
+      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
+
+      const valoreCampo = (sp.valore_indicatore_spaziocomune || '').trim();
+      const matchValore = (valoreSelezionato === "tutti" || valoreCampo.toLowerCase() === valoreSelezionato.trim().toLowerCase());
+
+      return matchDisabilita && matchValore;
+    });
+
+    const idPianiValidi = new Set([
+      ...stanzeFiltrate.map(st => st.id_piano),
+      ...spaziFiltrati.map(sp => sp.id_piano)
+    ]);
+
+    const residenzeFiltrate = tutteLeResidenzeRaw.filter(res => {
+      const matchCitta = (idCittaSelezionata === "tutte" || String(res.id_citta) === String(idCittaSelezionata));
+      
+      if (disabilitaSelezionata === "tutte" && valoreSelezionato === "tutti") {
+        return matchCitta;
+      }
+
+      const haPianoCompatibile = idPianiValidi.has(res.id_piano);
+      return matchCitta && haPianoCompatibile;
+    });
+
+    const alberoStrutturato = assemblaAlberoResidenze(residenzeFiltrate, stanzeFiltrate, spaziFiltrati);
+    renderResidenze(alberoStrutturato);
+  }
+}
+
+// ============================================================
+// HELPER TREE INDICATORI
+// ============================================================
+function generaHtmlAlberoIndicatori(areeMap, coloreTema = '#0284c7') {
+  const nomiAree = Object.keys(areeMap);
+  if (nomiAree.length === 0) {
+    return '<div style="color: #94a3b8; font-style: italic; font-size:0.8em; margin-top:4px;">Nessun indicatore associato.</div>';
+  }
+
+  let htmlAree = '';
+
+  nomiAree.forEach(area => {
+    const ambitiMap = areeMap[area];
+    let htmlAmbiti = '';
+
+    Object.keys(ambitiMap).forEach(ambito => {
+      const requisiti = ambitiMap[ambito];
+      let htmlRequisiti = '';
+
+      requisiti.forEach(req => {
+        htmlRequisiti += `
+          <div style="margin-top: 4px; padding: 4px 6px; background: #ffffff; border-left: 3px solid ${coloreTema}; font-size: 0.8em; border-radius: 2px;">
+            <div><strong>📌 Requisito:</strong> ${req.requisito}</div>
+            <div style="color: ${coloreTema}; font-weight: bold;">Valore: ${req.valore ?? 'N/D'}</div>
+            ${req.nota ? `<div style="color: #64748b; font-style: italic; font-size: 0.9em;">Note: ${req.nota}</div>` : ''}
+          </div>
+        `;
+      });
+
+      htmlAmbiti += `
+        <details style="margin-top: 4px; border: 1px solid #e2e8f0; border-radius: 4px;">
+          <summary style="padding: 3px 6px; background: #f8fafc; font-size: 0.82em; cursor: pointer; font-weight: 500;">
+            📂 Ambito: ${ambito} (${requisiti.length})
+          </summary>
+          <div style="padding: 4px 6px; background: #f1f5f9;">
+            ${htmlRequisiti}
+          </div>
+        </details>
+      `;
+    });
+
+    htmlAree += `
+      <details style="margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        <summary style="padding: 4px 8px; background: #ffffff; font-size: 0.85em; cursor: pointer; font-weight: 600; color: ${coloreTema};">
+          🏷️ Area: ${area}
+        </summary>
+        <div style="padding: 4px 6px; background: #ffffff;">
+          ${htmlAmbiti}
+        </div>
+      </details>
+    `;
+  });
+
+  return `
+    <details style="margin-top: 6px;">
+      <summary style="font-weight: 600; color: ${coloreTema}; cursor: pointer; font-size: 0.85em;">
+        📋 Indicatori (${nomiAree.length} Aree)
+      </summary>
+      <div style="margin-top: 4px; padding-left: 4px;">
+        ${htmlAree}
+      </div>
+    </details>
+  `;
+}
+
+// ============================================================
+// RENDERING CARD
+// ============================================================
+function renderResidenze(residenze) {
+  const container = document.getElementById('lista-residenze');
+  container.className = 'cards-grid';
+  container.innerHTML = ''; 
+
+  if (!residenze || residenze.length === 0) {
+    container.innerHTML = '<div class="status-msg">Nessuna residenza trovata per i criteri selezionati.</div>';
+    return;
+  }
+
+  residenze.forEach(residenza => {
+    const scheda = residenza.scheda;
+    const nomeCitta = residenza.citta || residenza.localita || 'N/D';
+
+    const via = encodeURIComponent((residenza.indirizzo || '').trim());
+    const cap = encodeURIComponent((residenza.cap || '').trim());
+    const localita = encodeURIComponent((residenza.localita || '').trim());
+    const indirizzoFormattato = `${via},${cap},${localita}`.replace(/\s+/g, '+');
+
+    const formattaBooleano = (v) => v === true ? 'Sì' : (v === false ? 'No' : v || 'N/D');
+
+    let htmlPiani = '';
+    const pianos = residenza.piani || [];
+
+    if (pianos.length > 0) {
+      pianos.sort((a, b) => (a.piano || 0) - (b.piano || 0));
+
+      pianos.forEach(p => {
+        const etichettaPiano = (p.piano !== null && p.piano !== undefined) ? p.piano : 'N/D';
+        const stanze = p.stanze || [];
+        const spaziComuni = p.spaziComuni || [];
+
+        let DettagliPianoHTML = '';
+
+        if (stanze.length > 0) {
+          stanze.forEach(st => {
+            if (st.stanza) {
+              const htmlIndicatori = generaHtmlAlberoIndicatori(st.areeMap || {}, '#0284c7');
+              DettagliPianoHTML += `
+                <details class="tree-stanza" style="margin-top: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
+                  <summary style="padding: 5px 8px; background: #f8fafc; font-size: 0.85em; cursor: pointer; font-weight: 600;">
+                    🚪 Stanza: ${st.stanza}
+                  </summary>
+                  <div style="padding: 6px 8px; font-size: 0.82em; background: #fafafa; border-top: 1px solid #f1f5f9;">
+                    ${st.nota ? `<div style="margin-bottom: 4px;"><strong>Note Stanza:</strong> <em>${st.nota}</em></div>` : ''}
+                    ${htmlIndicatori}
+                  </div>
+                </details>
+              `;
+            }
+          });
+        }
+
+        if (spaziComuni.length > 0) {
+          spaziComuni.forEach(sp => {
+            if (sp.spaziocomune) {
+              const htmlIndicatori = generaHtmlAlberoIndicatori(sp.areeMap || {}, '#0369a1');
+              DettagliPianoHTML += `
+                <details class="tree-stanza" style="margin-top: 6px; border: 1px solid #bae6fd; border-radius: 4px; background: #fff;">
+                  <summary style="padding: 5px 8px; background: #f0f9ff; font-size: 0.85em; cursor: pointer; font-weight: 600; color: #0369a1;">
+                    🛋️ Spazio Comune: ${sp.spaziocomune}
+                  </summary>
+                  <div style="padding: 6px 8px; font-size: 0.82em; background: #f8fafc; border-top: 1px solid #e0f2fe;">
+                    ${sp.nota ? `<div style="margin-bottom: 4px;"><strong>Note Spazio:</strong> <em>${sp.nota}</em></div>` : ''}
+                    ${htmlIndicatori}
+                  </div>
+                </details>
+              `;
+            }
+          });
+        }
+
+        if (!DettagliPianoHTML) {
+          DettagliPianoHTML = `<div style="font-size: 0.8em; color: #94a3b8; font-style: italic; padding: 4px 0;">Nessuna stanza o spazio comune censito su questo piano.</div>`;
+        }
+
+        htmlPiani += `
+          <details class="tree-piano" style="margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
+            <summary style="padding: 6px 10px; background: #f1f5f9; font-weight: bold; font-size: 0.9em; cursor: pointer; display: flex; justify-content: space-between;">
+              <span>📐 Piano ${etichettaPiano}</span>
+              <span style="font-weight: normal; font-size: 0.8em; color: #64748b;">
+                ${stanze.length} 🚪 | ${spaziComuni.length} 🛋️
+              </span>
+            </summary>
+            <div style="padding: 6px 8px; background: #ffffff;">
+              ${DettagliPianoHTML}
+            </div>
+          </details>
+        `;
+      });
+    } else {
+      htmlPiani = `<div style="background: #fffbeb; color: #b45309; padding: 8px; border-radius: 4px; font-size: 0.85em; border: 1px solid #fef3c7;">
+        ⚠️ Nessun dettaglio sui piani trovato per questa residenza.
+      </div>`;
+    }
+
+    const cardNode = document.createElement('div');
+    cardNode.className = 'card-residenza';
+
+    cardNode.innerHTML = `
+      <div class="card-header-title">
+        <span>🏢 ${residenza.struttura || 'Senza nome'}</span>
+        <span class="badge-info" style="font-size:0.7em;">${nomeCitta}</span>
+      </div>
+
+      <div class="info-grid">
+        <div><strong>Indirizzo:</strong> ${residenza.indirizzo || 'N/D'} 
+          <a href="https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}" target="_blank" style="text-decoration:none;">📍</a>
+        </div>
+        <div><strong>CAP / Località:</strong> ${residenza.cap || ''} ${nomeCitta}</div>
+        <div><strong>Telefono:</strong> <a href="tel:${residenza.telefono || ''}">${residenza.telefono || 'N/D'} 📞</a></div>
+        ${scheda ? `
+          <div><strong>Ascensore:</strong> ${formattaBooleano(scheda.ascensore)}</div>
+          <div><strong>Rampa Struttura:</strong> ${formattaBooleano(scheda.rampa)}</div>
+        ` : ''}
+      </div>
+
+      <div class="section-title">Piani e Struttura Interna:</div>
+      <div class="piani-container">
+        ${htmlPiani}
+      </div>
+    `;
+
+    container.appendChild(cardNode);
+  });
+}
+
+// ============================================================
+// SWITCH VISTE E TABELLA DATATABLES
+// ============================================================
+function mostraTabella() {
+  document.getElementById('btnVistaTabella').style.display = 'none';
+  document.getElementById('btnVistaCard').style.display = 'inline-block';
+  
+  const container = document.getElementById('lista-residenze');
+  container.classList.remove('cards-grid');
+  container.classList.add('vista-tabella-full');
+
+  applicaFiltro();
+}
+
+function mostraCard() {
+  document.getElementById('btnVistaTabella').style.display = 'inline-block';
+  document.getElementById('btnVistaCard').style.display = 'none';
+
+  const container = document.getElementById('lista-residenze');
+  container.classList.remove('vista-tabella-full');
+  container.classList.add('cards-grid');
+
+  applicaFiltro();
+}
+
+
+
+
+
+
+
+function renderTabellaCompleta(datiGrezzi) {
+  const container = document.getElementById('lista-residenze');
+
+  // 1. Distruggi pulitamente la tabella precedente se è già attiva
+  if ($.fn.DataTable.isDataTable('#tabellaCompleta')) {
+    $('#tabellaCompleta').DataTable().destroy();
+    $('#tabellaCompleta').empty();
+  }
+
+  if (!datiGrezzi || datiGrezzi.length === 0) {
+    container.innerHTML = '<div class="status-msg">Nessun dato disponibile per i filtri selezionati.</div>';
+    return;
+  }
+
+  // 2. Costruzione della struttura HTML della tabella
   let html = `<table id="tabellaCompleta" class="display nowrap" style="width:100%"><thead><tr>`;
+  const colonne = Object.keys(datiGrezzi[0]);
+  
+  // Campi tecnici da nascondere visivamente
+  const campiDaNascondere = ['id_citta', 'id_residenza', 'id_piano', 'id_stanza', 'id_spaziocomune'];
 
   colonne.forEach(c => {
-    let titolo = c;
-    titolo = titolo.replace(/^scheda_/, '');
-    titolo = titolo.replace(/^piano_(\d+)_/, (_, piano) => {
-      return `Piano ${parseInt(piano) + 1} - `;
-    });
-    titolo = titolo.replaceAll('_', ' ');
-    titolo = titolo
-      .split(' ')
-      .map(parola => parola.charAt(0).toUpperCase() + parola.slice(1))
-      .join(' ');
-
-    html += `<th>${titolo}</th>`;
+    html += `<th>${c.replaceAll('_', ' ').toUpperCase()}</th>`;
   });
   html += `</tr></thead><tbody>`;
 
-  righe.forEach(r=>{
-     html += '<tr>';
-     colonne.forEach(c=>{
-        let v = r[c];
-        if(v === true) v = 'SI';
-        if(v === false) v = 'NO';
-        if(v === null || v === undefined) v = '';
-        html += `<td>${v}</td>`;
-     });
-     html += '</tr>';
+  datiGrezzi.forEach(r => {
+    html += '<tr>';
+    colonne.forEach(c => {
+      let v = r[c];
+      if (v === true) v = 'SI';
+      if (v === false) v = 'NO';
+      if (v === null || v === undefined) v = '';
+      html += `<td>${v}</td>`;
+    });
+    html += '</tr>';
   });
 
   html += '</tbody></table>';
-  document.getElementById('lista-residenze').innerHTML = html;
+  container.innerHTML = html;
 
-  // Inizializzazione DataTables
+  // 3. Calcolo degli indici delle colonne da nascondere
+  const indiciDaNascondere = colonne
+    .map((nomeColonna, index) => campiDaNascondere.includes(nomeColonna) ? index : -1)
+    .filter(index => index !== -1);
+
+  // 4. Inizializzazione DataTables con Pulsanti + Cerca + "Mostra X righe" a destra
   $('#tabellaCompleta').DataTable({
-    destroy: true,
     scrollX: true,
-    scrollCollapse: true,
-    fixedColumns: {
-      left: 1
-    },
+    autoWidth: false,
     pageLength: 25,
-    dom: 'Bfrtip',
-    buttons: [
-      { extend: 'copy', exportOptions: { columns: ':visible' } },
-      { extend: 'csv', exportOptions: { columns: ':visible' } },
-      { extend: 'excel', exportOptions: { columns: ':visible' } },
-      { extend: 'print', exportOptions: { columns: ':visible' } }
-    ],
     columnDefs: [
       {
-        targets: [0, 6, 9, 11, 12, 13], 
+        targets: indiciDaNascondere,
         visible: false,
-        searchable: false
+        searchable: true
+      }
+    ],
+    // "B" = Pulsanti Export, "fl" = Cerca seguito da Mostra X righe a destra
+    dom: '<"dt-top-container"B<"dt-search-length"fl>>rt<"dt-bottom-container"ip>',
+    buttons: [
+      {
+        extend: 'excelHtml5',
+        text: '📄 Excel',
+        title: 'Export_Residenze',
+        exportOptions: { columns: ':visible' }
+      },
+      {
+        extend: 'csvHtml5',
+        text: '📊 CSV',
+        title: 'Export_Residenze',
+        exportOptions: { columns: ':visible' }
+      },
+      {
+        extend: 'copyHtml5',
+        text: '📋 Copia',
+        exportOptions: { columns: ':visible' }
+      },
+      {
+        extend: 'print',
+        text: '🖨️ Stampa',
+        exportOptions: { columns: ':visible' }
       }
     ],
     language: {
       search: "🔍 Cerca:",
       lengthMenu: "Mostra _MENU_ righe",
-      info: "_START_ - _END_ di _TOTAL_",
-      paginate: {
-        previous: "←",
-        next: "→"
-      }
+      info: "Da _START_ a _END_ di _TOTAL_ righe",
+      paginate: { previous: "←", next: "→" }
     }
   });
 }
@@ -410,8 +823,21 @@ function renderTabellaCompleta(residenze){
 
 
 
-    // Avvia tutto quanto
-    inizializzaPagina();
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Avvio applicazione
+inizializzaPagina();
   </script>
 </body>
 </html>

@@ -1,0 +1,218 @@
+/* GRIGLIA CARD AFFIANCATE */
+/* Layout Full-Width per la vista Tabella Flat */
+#lista-residenze.vista-tabella-full {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important; /* Rimuove il display grid a 3 colonne */
+  overflow-x: auto;
+}
+
+/* Forzo DataTables ad occupare il 100% della larghezza */
+#lista-residenze.vista-tabella-full .dataTables_wrapper {
+  width: 100% !important;
+}
+
+
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* Crea colonne automatiche di min 350px */
+    gap: 20px;
+    margin-top: 20px;
+    align-items: start;
+  }
+
+  .card-residenza {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-header-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #0f172a;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 8px;
+  }
+
+  /* LAYOUT A BLOCCHI DENTRO LE CARD PICCOLE */
+  .info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: #334155;
+  }
+
+  .section-title {
+    font-size: 1em;
+    font-weight: 600;
+    color: #0284c7;
+    margin: 10px 0 8px 0;
+  }
+
+  /* ACCORDION PIANI / STANZE */
+  details {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  summary {
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.9em;
+  }
+
+  .tree-piano {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+  }
+
+  .tree-piano summary {
+    font-weight: bold;
+    background-color: #f1f5f9;
+  }
+
+  .piano-summary-content, .stanza-summary-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .piano-content {
+    padding: 8px 10px;
+    background-color: #ffffff;
+  }
+
+  .tree-stanza {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    margin-top: 6px;
+  }
+
+  .tree-stanza summary {
+    background-color: #f8fafc;
+  }
+
+  .stanza-content {
+    padding: 8px;
+    background-color: #fafafa;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.85em;
+  }
+
+  .badge-info {
+    font-size: 0.75em;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  
+  
+  .piani-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 20px;
+  margin-top: 8px;
+}
+
+
+
+/* Stile per espandere la vista tabella a tutto schermo */
+#lista-residenze.modal-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background-color: #ffffff;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+/* Fix per DataTables a schermo intero */
+.modal-fullscreen .dataTables_wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+
+
+<style>
+  /* Stili Vista Tabella Albero a 3 Piani */
+  .tree-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .tree-table tr.hidden {
+    display: none !important;
+  }
+
+  /* Differenziazione visiva dei livelli */
+  .tree-table tr.level-1 {
+    background-color: #f1f5f9 !important;
+    font-weight: bold;
+  }
+
+  .tree-table tr.level-2 {
+    background-color: #f8fafc !important;
+  }
+
+  .tree-table tr.level-3 {
+    background-color: #ffffff !important;
+    color: #475569;
+  }
+
+  .tree-toggle {
+    display: inline-block;
+    width: 16px;
+    font-size: 0.8em;
+    color: #0284c7;
+    transition: transform 0.15s ease;
+  }
+
+  /* Badge di riconoscimento per le tipologie */
+  .badge-type {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.78em;
+    font-weight: 600;
+  }
+  .badge-type.res { background: #e0f2fe; color: #0369a1; }
+  .badge-type.piano { background: #f1f5f9; color: #475569; }
+  .badge-type.stanza { background: #dcfce7; color: #15803d; }
+  .badge-type.spazio { background: #fef3c7; color: #b45309; }
+
+
+
+
+.dt-search-length {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  float: right;
+}
+
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_length {
+  float: none !important;
+  margin: 0 !important;
+}
