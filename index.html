@@ -31,6 +31,9 @@
 <body>
 
   <div class="container">
+  
+  <div  id="welcomeMessage"></div>
+  
     <h1>Elenco Residenze</h1>
 
     <div class="filtri-container" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
@@ -86,10 +89,117 @@ let tuttiGliSpaziComuniRaw = [];
 let vistaResidenzeCompletaRaw = [];
 
 async function inizializzaPagina() {
+  await showWelcomeMessage();
   await caricaMenuCitta();
   await caricaMenuDisabilita(); 
   await fetchTuttiIDati();
 }
+
+
+
+
+
+
+async function showWelcomeMessage(){
+
+  // =========================
+  // UTENTE LOGGATO
+  // =========================
+
+  const {
+    data: { user }
+  } = await clientSupabase.auth.getUser();
+
+
+  // se non loggato
+  if(!user){
+
+    window.location.href = "/";
+
+    return;
+  }
+
+
+  // =========================
+  // CERCA OPERATORE
+  // =========================
+
+  const { data, error } =
+    await clientSupabase
+      .from("operatori")
+      .select("*")
+      .eq("mail", user.email)
+      .single();
+
+  console.log(data, error);
+
+  
+  if(error){
+
+    console.log(error);
+
+    return;
+  }
+
+
+  // =========================
+  // DATA E ORA
+  // =========================
+
+  const now = new Date();
+
+  const giorno =
+    String(now.getDate()).padStart(2, '0');
+
+  const mese =
+    String(now.getMonth() + 1).padStart(2, '0');
+
+  const anno =
+    now.getFullYear();
+
+  const ore =
+    String(now.getHours()).padStart(2, '0');
+
+  const minuti =
+    String(now.getMinutes()).padStart(2, '0');
+
+
+  const dataFormattata =
+    `${giorno}/${mese}/${anno}`;
+
+  const oraFormattata =
+    `${ore}:${minuti}`;
+
+console.log(dataFormattata);
+console.log(oraFormattata);
+
+  // =========================
+  // MESSAGGIO
+  // =========================
+
+  document
+    .getElementById("welcomeMessage")
+    .innerHTML =
+
+    `
+      Ciao
+      <b>${data.cognome} ${data.nome}</b>,
+      oggi è il
+      <b>${dataFormattata}</b>
+      e sono le
+      <b>${oraFormattata}</b>
+    `;
+
+}
+
+
+
+
+
+
+
+
+
 
 async function caricaMenuCitta() {
   try {
