@@ -11,17 +11,29 @@
 
   <div class="container">
   
-  
-  
-  
-  
-	<div  id="welcomeMessage"></div>
+    <!-- BARRA SUPERIORE: Ritorno a Elenco a sinistra, Messaggio & Logout a destra -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+      
+      <!-- SINISTRA: Link per tornare alla home / index 
+      <a href="index.html" style="background-color: #e0f2fe; color: #0369a1; padding: 8px 14px; border: 1px solid #0284c7; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        🏠 Torna a Elenco
+      </a>
+		-->
+		
+      <!-- DESTRA: Messaggio di benvenuto & Pulsante Logout -->
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-left: auto;">
+        <div id="welcomeMessage"></div>
+
+        <button onclick="effettuaLogout()" style="background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s;">
+          🚪 Logout
+        </button>
+      </div>
+
+    </div>
   
     <h1>Rilevazione Caratteristiche Residenze</h1>
     
     <div id="status-box" class="status-alert"></div>
-
-	
 
     <div class="form-row">
       <div class="form-group">
@@ -41,73 +53,55 @@
 
     <div id="form-dati-scheda" style="display:none;">
 	
-	  <div id="box-last-update" class="form-group" style="display: none; margin-top: 15px; background: #e0f2fe; padding: 10px; border-radius: 4px; border-left: 4px solid #0284c7;">
-		<label>ultimo aggiornamento:</label>
+      <div id="box-last-update" class="form-group" style="display: none; margin-top: 15px; background: #e0f2fe; padding: 10px; border-radius: 4px; border-left: 4px solid #0284c7;">
+        <label>ultimo aggiornamento:</label>
         <span id="testo-last-update" style="font-size: 1.1em; font-weight: bold; margin-top: 5px;"></span>
       </div>
-	
-	
-	
 
-	<div style="display: flex; gap: 15px; align-items: stretch; width: 100%;">
+      <div style="display: flex; gap: 15px; align-items: stretch; width: 100%;">
 
-	  <div class="address-box" style="display: none; flex: 1; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #0284c7;">
-	
-	<label style="color: #0369a1;">📍 indirizzo:</label>
-		<span id="box-indirizzo" style="font-size: 1.1em; font-weight: bold; color: #0369a1;">Via Roma 1, Milano</span>
+        <div class="address-box" style="display: none; flex: 1; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #0284c7;">
+          <label style="color: #0369a1;">📍 indirizzo:</label>
+          <span id="box-indirizzo" style="font-size: 1.1em; font-weight: bold; color: #0369a1;">Via Roma 1, Milano</span>
 
-		<a id="mapsButton" href="https://google.com" target="_blank" style="text-decoration: none; font-size: 1.2em; border: none; background: transparent;">
-				📍
-		</a>
-	  </div>
+          <a id="mapsButton" href="https://google.com" target="_blank" style="text-decoration: none; font-size: 1.2em; border: none; background: transparent;">
+              📍
+          </a>
+        </div>
 
+        <div id="box-telefono" class="form-group" style="display: none; flex: 1; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #0284c7;">
+          <label style="color: #0369a1;">📞 telefono:</label>
+          <span id="testo-telefono" style="font-size: 1.1em; font-weight: bold; margin-top: 5px; color: #0369a1;"></span>
+        </div>
 
-	  <div id="box-telefono" class="form-group" style="display: none; flex: 1; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #0284c7;">
-		<label style="color: #0369a1;">📞 telefono:</label>
-		<span id="testo-telefono" style="font-size: 1.1em; font-weight: bold; margin-top: 5px; color: #0369a1;"></span>
-	  </div>
+      </div>
 
-	</div>
-
-
-	
-	
-
-	
       <h2>Scheda Tecnica Generale</h2>
       
       <div class="form-group">
         <label>Barriere Architettoniche / Servizi</label>
         <div class="checkbox-group">
-		
-		<label class="checkbox-label"> Portineria
-		<td>
+          <label class="checkbox-label"> Portineria
             <select id= "select-portineria" style="width: 220px;">
-              <option value="No" ${portineria === 'NO' ? 'selected' : ''}>No</option>
-              <option value="SI H24" ${portineria === 'SI H24' ? 'selected' : ''}>Si, H24</option>
-              <option value="SI PRESIDIATA" ${portineria === 'SI PRESIDIATA' ? 'selected' : ''}>Si, Presidiata</option>
-			  <option value="SI PRESIDIATA REMOTO" ${portineria === 'SI PRESIDIATA REMOTO' ? 'selected' : ''}>Si, Presidiata da Remoto</option>
+              <option value="No">No</option>
+              <option value="SI H24">Si, H24</option>
+              <option value="SI PRESIDIATA">Si, Presidiata</option>
+              <option value="SI PRESIDIATA REMOTO">Si, Presidiata da Remoto</option>
             </select>
-          </td>
-		</label>
-		</div>
-		<div class="checkbox-group">
-		  <label class="checkbox-label">
+          </label>
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox-label">
             <input type="checkbox" id="check-mensa"> Mensa
           </label>
-		  
-		 
-	  
-	  
-		  
-		<div class="checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" id="check-ascensore"> Ascensore
           </label>
-		  <label class="checkbox-label">
+          <label class="checkbox-label">
             <input type="checkbox" id="check-montascale"> Montascale
           </label>
-		  <label class="checkbox-label">
+          <label class="checkbox-label">
             <input type="checkbox" id="check-montapersone"> Montapersone
           </label>
           <label class="checkbox-label">
@@ -115,33 +109,33 @@
           </label>
         </div>
       </div>
-	  
-	  <div class="checkbox-group">
-	  <div class="form-group" style="max-width: 200px;">
-        <label for="input-num-ospiti">N Ospiti Totali</label>
-        <input type="number" id="input-num-ospiti" min="1" value="1">
-      </div>
-	  
-	  <div class="form-group" style="max-width: 200px;">
-        <label for="input-num-stanze">N Stanze Totali</label>
-        <input type="number" id="input-num-stanze" min="1" value="1">
-      </div>
-	  
-	  <div class="form-group" style="max-width: 200px;">
-        <label for="input-num-stanze-disabili">N Stanze Disabili Tot.</label>
-        <input type="number" id="input-num-stanze-disabili" min="0" value="1">
-      </div>
-	  
-	  <div class="form-group" style="max-width: 200px;">
-        <label for="input-num-spazi-comuni">N Spazi Comuni Tot.</label>
-        <input type="number" id="input-num-spazi-comuni" min="0" value="1">
-      </div>
+      
+      <div class="checkbox-group">
+        <div class="form-group" style="max-width: 200px;">
+          <label for="input-num-ospiti">N Ospiti Totali</label>
+          <input type="number" id="input-num-ospiti" min="1" value="1">
+        </div>
+        
+        <div class="form-group" style="max-width: 200px;">
+          <label for="input-num-stanze">N Stanze Totali</label>
+          <input type="number" id="input-num-stanze" min="1" value="1">
+        </div>
+        
+        <div class="form-group" style="max-width: 200px;">
+          <label for="input-num-stanze-disabili">N Stanze Disabili Tot.</label>
+          <input type="number" id="input-num-stanze-disabili" min="0" value="1">
+        </div>
+        
+        <div class="form-group" style="max-width: 200px;">
+          <label for="input-num-spazi-comuni">N Spazi Comuni Tot.</label>
+          <input type="number" id="input-num-spazi-comuni" min="0" value="1">
+        </div>
 
-      <div class="form-group" style="max-width: 200px;">
-        <label for="input-piani">N Piani Totali</label>
-        <input type="number" id="input-piani" min="1" value="1" oninput="rigeneraPianiVuoti()">
+        <div class="form-group" style="max-width: 200px;">
+          <label for="input-piani">N Piani Totali</label>
+          <input type="number" id="input-piani" min="1" value="1" oninput="rigeneraPianiVuoti()">
+        </div>
       </div>
-	   </div>
 
       <div id="sezione-piani">
         <h2>Dettaglio Singoli Piani</h2>
@@ -151,11 +145,11 @@
             <thead>
               <tr>
                 <th>Piano</th>
-				<th>Rampa</th>
+                <th>Rampa</th>
                 <th>Accessibilità</th>
                 <th>Stanze Tot.</th>
                 <th>Stanze Access.</th>
-				<th>Spazi Comuni</th>
+                <th>Spazi Comuni</th>
                 <th>Note</th>
               </tr>
             </thead>
@@ -163,35 +157,30 @@
             </tbody>
           </table>
         </div>
-        
       </div>
 
-	<!-- SEZIONE DINAMICA STANZE ACCESSIBILI -->
-	<div id="sezione-dettaglio-stanze" style="display: none; margin-top: 30px;">
-	  <h2>Dettaglio Stanze Accessibili</h2>
-	  <div id="contenitore-stanze"></div>
-	</div>
+      <!-- SEZIONE DINAMICA STANZE ACCESSIBILI -->
+      <div id="sezione-dettaglio-stanze" style="display: none; margin-top: 30px;">
+        <h2>Dettaglio Stanze Accessibili</h2>
+        <div id="contenitore-stanze"></div>
+      </div>
 
-	<!-- SEZIONE DINAMICA SPAZI COMUNI -->
-	<div id="sezione-dettaglio-spazi-comuni" style="display: none; margin-top: 30px;">
-	  <h2>Dettaglio Spazi Comuni</h2>
-	  <div id="contenitore-spazi-comuni"></div>
-	</div>
-
-
+      <!-- SEZIONE DINAMICA SPAZI COMUNI -->
+      <div id="sezione-dettaglio-spazi-comuni" style="display: none; margin-top: 30px;">
+        <h2>Dettaglio Spazi Comuni</h2>
+        <div id="contenitore-spazi-comuni"></div>
+      </div>
 
       <button class="btn-salva" onclick="salvaTutto()">SALVA DATI RESIDENZA</button>
     </div>
   </div>
 
-
-    <!-- PRIMA DI TUTTO: I due file JavaScript esterni che contengono le funzioni -->
+  <!-- JS Esterni -->
   <script src="app.js"></script>
   <script src="appasync.js"></script>
 
-  <!-- INFINE: Lo script locale per le configurazioni e la logica della pagina -->
+  <!-- Script di Gestione Auth e Inizializzazione -->
   <script>
-    // 1. Configurazione Supabase (Deve stare in alto affinché i file esterni lo vedano)
     const SUPABASE_URL = "https://hrqztgddqmwtljafqahn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
       
@@ -200,37 +189,73 @@
     let tutteLeResidenze = [];
     let schedaEsistenteId = null; 
     let pianosCaricatiInMemoria = []; 
-	
 
+    // =========================
+    // LOGOUT MANUALE E AUTOMATICO
+    // =========================
+    async function effettuaLogout() {
+      try {
+        await clientSupabase.auth.signOut();
+      } catch (err) {
+        console.error("Errore durante il logout:", err);
+      } finally {
+        window.location.href = "login.html";
+      }
+    }
 
-	
-	
-	
-	showWelcomeMessage();
-    caricaCitta();
+    // Disconnessione automatica alla chiusura della scheda o browser
+    window.addEventListener("beforeunload", () => {
+      clientSupabase.auth.signOut();
+    });
 
+    // =========================
+    // INIZIALIZZAZIONE CON AUTH CHECK
+    // =========================
+    async function inizializzaGestione() {
+      // 1. Controlla se l'utente è loggato (mantiene la sessione avviata da index)
+      const { data: { user } } = await clientSupabase.auth.getUser();
 
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
 
-	
-	
-// Lista delle 8 categorie richieste
-/*
-const CATEGORIE_STANZA = [
-  "Comfort acustico",
-  "Accessibilità generale",
-  "Comfort visivo",
-  "Comfort cognitivo",
-  "Arredi",
-  "Bagno",
-  "Tecnologia",
-  "Comfort sensoriale"
-];
-*/
+      // 2. Carica il messaggio di benvenuto e i dati
+      await showWelcomeMessage(user);
+      if (typeof caricaCitta === "function") {
+        caricaCitta();
+      }
+    }
 
+    async function showWelcomeMessage(user) {
+      const { data, error } = await clientSupabase
+        .from("operatori")
+        .select("*")
+        .eq("mail", user.email)
+        .single();
+
+      if (error || !data) {
+        console.log("Errore recupero operatore:", error);
+        return;
+      }
+
+      const now = new Date();
+      const giorno = String(now.getDate()).padStart(2, '0');
+      const mese = String(now.getMonth() + 1).padStart(2, '0');
+      const anno = now.getFullYear();
+      const ore = String(now.getHours()).padStart(2, '0');
+      const minuti = String(now.getMinutes()).padStart(2, '0');
+
+      const dataFormattata = `${giorno}/${mese}/${anno}`;
+      const oraFormattata = `${ore}:${minuti}`;
+
+      document.getElementById("welcomeMessage").innerHTML = `
+        Ciao <b>${data.cognome} ${data.nome}</b>, oggi è il <b>${dataFormattata}</b> e sono le <b>${oraFormattata}</b>
+      `;
+    }
+
+    // Esegui l'inizializzazione
+    inizializzaGestione();
   </script>
-  
-  
-
-  
 </body>
 </html>

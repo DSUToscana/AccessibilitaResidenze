@@ -6,7 +6,7 @@
   <title>Accessibilita e Fruibilita</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">  <!-- CSS DataTables Buttons -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.dataTables.min.css">
 
   <link rel="stylesheet" href="stile.css"> 
@@ -17,23 +17,37 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 
-
-	<!-- JS DataTables Buttons & Dipendenze per Excel/CSV -->
-	<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-	<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-	<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-
-
+  <!-- JS DataTables Buttons & Dipendenze per Excel/CSV -->
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
   <link rel="stylesheet" href="stileindex.css">
 </head>
 <body>
 
   <div class="container">
-  
-  <div  id="welcomeMessage"></div>
-  
+    
+    <!-- BARRA SUPERIORE: Pulsante Gestione a sinistra, Benvenuto & Logout in alto a destra -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+      
+      <!-- SINISTRA: Link alla gestione (Apre in un altro TAB senza perdere la sessione) -->
+      <a href="gestione.html" target="_blank" rel="noopener noreferrer" style="background-color: #e0f2fe; color: #0369a1; padding: 10px 18px; border: 1px solid #0284c7; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        ⚙️ Vai a Rilevazione
+      </a>
+
+      <!-- DESTRA: Messaggio di benvenuto & Pulsante Logout -->
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-left: auto;">
+        <div id="welcomeMessage"></div>
+
+        <button onclick="effettuaLogout()" title="Logout" style="background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s;">
+          🚪
+        </button>
+      </div>
+
+    </div>
+
     <h1>Elenco Residenze</h1>
 
     <div class="filtri-container" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
@@ -58,9 +72,9 @@
         <label for="filtro-valore">Valore Indicatore:</label>
         <select id="filtro-valore" onchange="applicaFiltro()">
           <option value="tutti">Tutti i valori</option>
-          <option value="Conforme / Presente">Conforme / Presente</option>
+          <option value="Conforme">Conforme / Presente</option>
           <option value="Non Conforme">Non Conforme</option>
-          <option value="Parzialmente Conforme">Parzialmente Conforme</option>
+          <option value="Parziale">Parzialmente Conforme</option>
           <option value="Non Applicabile">Non Applicabile</option>
         </select>
       </div>
@@ -88,118 +102,65 @@ let tutteLeStanzeRaw = [];
 let tuttiGliSpaziComuniRaw = [];
 let vistaResidenzeCompletaRaw = [];
 
+// =========================
+// GESTIONE LOGOUT
+// =========================
+async function effettuaLogout() {
+  try {
+    await clientSupabase.auth.signOut();
+  } catch (err) {
+    console.error("Errore durante il logout:", err);
+  } finally {
+    window.location.href = "login.html";
+  }
+}
+
+// Rimossa la disconnessione automatica prima della chiusura per preservare la sessione tra schede
+
+// =========================
+// INIZIALIZZAZIONE PAGINA & CONTROLLO AUTH
+// =========================
 async function inizializzaPagina() {
-  await showWelcomeMessage();
+  // Verifica autenticazione bloccante prima di qualsiasi carica dati
+  const { data: { user } } = await clientSupabase.auth.getUser();
+
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  await showWelcomeMessage(user);
   await caricaMenuCitta();
   await caricaMenuDisabilita(); 
   await fetchTuttiIDati();
 }
 
+async function showWelcomeMessage(user){
+  const { data, error } = await clientSupabase
+    .from("operatori")
+    .select("*")
+    .eq("mail", user.email)
+    .single();
 
-
-
-
-
-async function showWelcomeMessage(){
-
-  // =========================
-  // UTENTE LOGGATO
-  // =========================
-
-  const {
-    data: { user }
-  } = await clientSupabase.auth.getUser();
-
-
-  // se non loggato
-  if(!user){
-
-    window.location.href = "/";
-
-    return;
-  }
-
-
-  // =========================
-  // CERCA OPERATORE
-  // =========================
-
-  const { data, error } =
-    await clientSupabase
-      .from("operatori")
-      .select("*")
-      .eq("mail", user.email)
-      .single();
-
-  console.log(data, error);
-
-  
   if(error){
-
     console.log(error);
-
     return;
   }
-
-
-  // =========================
-  // DATA E ORA
-  // =========================
 
   const now = new Date();
+  const giorno = String(now.getDate()).padStart(2, '0');
+  const mese = String(now.getMonth() + 1).padStart(2, '0');
+  const anno = now.getFullYear();
+  const ore = String(now.getHours()).padStart(2, '0');
+  const minuti = String(now.getMinutes()).padStart(2, '0');
 
-  const giorno =
-    String(now.getDate()).padStart(2, '0');
+  const dataFormattata = `${giorno}/${mese}/${anno}`;
+  const oraFormattata = `${ore}:${minuti}`;
 
-  const mese =
-    String(now.getMonth() + 1).padStart(2, '0');
-
-  const anno =
-    now.getFullYear();
-
-  const ore =
-    String(now.getHours()).padStart(2, '0');
-
-  const minuti =
-    String(now.getMinutes()).padStart(2, '0');
-
-
-  const dataFormattata =
-    `${giorno}/${mese}/${anno}`;
-
-  const oraFormattata =
-    `${ore}:${minuti}`;
-
-console.log(dataFormattata);
-console.log(oraFormattata);
-
-  // =========================
-  // MESSAGGIO
-  // =========================
-
-  document
-    .getElementById("welcomeMessage")
-    .innerHTML =
-
-    `
-      Ciao
-      <b>${data.cognome} ${data.nome}</b>,
-      oggi è il
-      <b>${dataFormattata}</b>
-      e sono le
-      <b>${oraFormattata}</b>
-    `;
-
+  document.getElementById("welcomeMessage").innerHTML = `
+    Ciao <b>${data.cognome} ${data.nome}</b>, oggi è il <b>${dataFormattata}</b> e sono le <b>${oraFormattata}</b>
+  `;
 }
-
-
-
-
-
-
-
-
-
 
 async function caricaMenuCitta() {
   try {
@@ -421,9 +382,6 @@ function assemblaAlberoResidenze(residenzeGrezze, stanzeGrezze, spaziGrezzi) {
 // ============================================================
 // APPLICAZIONE FILTRI PER ENTRAMBE LE VISTE
 // ============================================================
-
-
-
 function applicaFiltro() {
   const selectCitta = document.getElementById('filtro-citta');
   const idCittaSelezionata = selectCitta.value;
@@ -437,12 +395,7 @@ function applicaFiltro() {
   const inVistaTabella = document.getElementById('btnVistaCard').style.display === 'inline-block';
 
   if (inVistaTabella) {
-    // --------------------------------------------------------
-    // FILTRAGGIO VISTA TABELLA (v_residenze_completa)
-    // --------------------------------------------------------
     const tabellaFiltrata = vistaResidenzeCompletaRaw.filter(riga => {
-      
-      // 1. Filtro Città (Controlla id_citta o fallback sul nome della città)
       let matchCitta = true;
       if (idCittaSelezionata !== "tutte") {
         if (riga.id_citta !== undefined && riga.id_citta !== null) {
@@ -452,18 +405,23 @@ function applicaFiltro() {
         }
       }
 
-      // 2. Filtro Valore Indicatore
       let matchValore = true;
       if (valoreSelezionato !== "tutti") {
         const valCamp = (riga.valore_indicatore || '').toString().trim().toLowerCase();
         matchValore = (valCamp === valoreSelezionato);
       }
 
-      // 3. Filtro Disabilità
       let matchDisabilita = true;
       if (disabilitaSelezionata !== "tutte") {
-        const disCamp = (riga.disabilita_indicatore || '').toString().toLowerCase();
-        matchDisabilita = disCamp.includes(disabilitaSelezionata);
+        const testoDisabilitaCampo = (
+          riga.disabilita_indicatore || 
+          riga.disabilita_indicatore_stanza || 
+          riga.disabilita_indicatore_spaziocomune || 
+          riga.disabilita || 
+          ''
+        ).toString().toLowerCase();
+
+        matchDisabilita = testoDisabilitaCampo.includes(disabilitaSelezionata);
       }
 
       return matchCitta && matchValore && matchDisabilita;
@@ -472,120 +430,41 @@ function applicaFiltro() {
     renderTabellaCompleta(tabellaFiltrata);
 
   } else {
-    // --------------------------------------------------------
-    // FILTRAGGIO VISTA CARD
-    // --------------------------------------------------------
     const stanzeFiltrate = tutteLeStanzeRaw.filter(st => {
-      const disabilitaCampo = (st.disabilita_indicatore_stanza || '').toLowerCase();
-      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
-
-      const valoreCampo = (st.valore_indicatore_stanza || '').trim().toLowerCase();
-      const matchValore = (valoreSelezionato === "tutti" || valoreCampo === valoreSelezionato);
-
-      return matchDisabilita && matchValore;
-    });
-
-    const spaziFiltrati = tuttiGliSpaziComuniRaw.filter(sp => {
-      const disabilitaCampo = (sp.disabilita_indicatore_spazicomuni || '').toLowerCase();
-      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
-
-      const valoreCampo = (sp.valore_indicatore_spaziocomune || '').trim().toLowerCase();
-      const matchValore = (valoreSelezionato === "tutti" || valoreCampo === valoreSelezionato);
-
-      return matchDisabilita && matchValore;
-    });
-
-    const idPianiValidi = new Set([
-      ...stanzeFiltrate.map(st => st.id_piano),
-      ...spaziFiltrati.map(sp => sp.id_piano)
-    ]);
-
-    const residenzeFiltrate = tutteLeResidenzeRaw.filter(res => {
-      const matchCitta = (idCittaSelezionata === "tutte" || String(res.id_citta) === String(idCittaSelezionata));
+      const testoDisabilitaStanza = (
+        st.disabilita_indicatore_stanza || 
+        st.disabilita_indicatore || 
+        st.disabilita || 
+        ''
+      ).toString().toLowerCase();
       
-      if (disabilitaSelezionata === "tutte" && valoreSelezionato === "tutti") {
-        return matchCitta;
-      }
+      const matchDisabilita = (
+        disabilitaSelezionata === "tutte" || 
+        testoDisabilitaStanza.includes(disabilitaSelezionata)
+      );
 
-      const haPianoCompatibile = idPianiValidi.has(res.id_piano);
-      return matchCitta && haPianoCompatibile;
-    });
-
-    const alberoStrutturato = assemblaAlberoResidenze(residenzeFiltrate, stanzeFiltrate, spaziFiltrati);
-    renderResidenze(alberoStrutturato);
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function applicaFiltroOLD() {
-  const selectCitta = document.getElementById('filtro-citta');
-  const idCittaSelezionata = selectCitta.value;
-  const nomeCittaSelezionata = selectCitta.options[selectCitta.selectedIndex] ? selectCitta.options[selectCitta.selectedIndex].text.trim().toLowerCase() : '';
-  
-  const disabilitaSelezionata = document.getElementById('filtro-disabilita').value.toLowerCase();
-  const valoreSelezionato = document.getElementById('filtro-valore').value;
-  const inVistaTabella = document.getElementById('btnVistaCard').style.display === 'inline-block';
-
-  if (inVistaTabella) {
-    // --------------------------------------------------------
-    // FILTRAGGIO PER LA VISTA TABELLA (v_residenze_completa)
-    // --------------------------------------------------------
-    const tabellaFiltrata = vistaResidenzeCompletaRaw.filter(riga => {
-      // 1. Filtro Città (via ID se presente, altrimenti via Testo)
-      let matchCitta = true;
-      if (idCittaSelezionata !== "tutte") {
-        if (riga.id_citta !== undefined && riga.id_citta !== null) {
-          matchCitta = String(riga.id_citta) === String(idCittaSelezionata);
-        } else if (riga.citta) {
-          matchCitta = riga.citta.toLowerCase() === nomeCittaSelezionata;
-        }
-      }
-
-      // 2. Filtro Valore Indicatore
-      const valCampo = (riga.valore_indicatore || '').trim().toLowerCase();
-      const matchValore = (valoreSelezionato === "tutti" || valCampo === valoreSelezionato.trim().toLowerCase());
-
-      // 3. Filtro Disabilità (se il campo è presente nella vista)
-      const disabilitaCampo = (riga.disabilita || riga.disabilita_indicatore || '').toLowerCase();
-      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
-
-      return matchCitta && matchValore && matchDisabilita;
-    });
-
-    renderTabellaCompleta(tabellaFiltrata);
-
-  } else {
-    // --------------------------------------------------------
-    // FILTRAGGIO PER LA VISTA CARD
-    // --------------------------------------------------------
-    const stanzeFiltrate = tutteLeStanzeRaw.filter(st => {
-      const disabilitaCampo = (st.disabilita_indicatore_stanza || '').toLowerCase();
-      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
-
-      const valoreCampo = (st.valore_indicatore_stanza || '').trim();
-      const matchValore = (valoreSelezionato === "tutti" || valoreCampo.toLowerCase() === valoreSelezionato.trim().toLowerCase());
+      const valoreCampo = (st.valore_indicatore_stanza || '').toString().trim().toLowerCase();
+      const matchValore = (valoreSelezionato === "tutti" || valoreCampo === valoreSelezionato);
 
       return matchDisabilita && matchValore;
     });
 
     const spaziFiltrati = tuttiGliSpaziComuniRaw.filter(sp => {
-      const disabilitaCampo = (sp.disabilita_indicatore_spazicomuni || '').toLowerCase();
-      const matchDisabilita = (disabilitaSelezionata === "tutte" || disabilitaCampo.includes(disabilitaSelezionata));
+      const testoDisabilitaSpazio = (
+        sp.disabilita_indicatore_spazicomuni || 
+        sp.disabilita_indicatore_spaziocomune || 
+        sp.disabilita_indicatore || 
+        sp.disabilita || 
+        ''
+      ).toString().toLowerCase();
+      
+      const matchDisabilita = (
+        disabilitaSelezionata === "tutte" || 
+        testoDisabilitaSpazio.includes(disabilitaSelezionata)
+      );
 
-      const valoreCampo = (sp.valore_indicatore_spaziocomune || '').trim();
-      const matchValore = (valoreSelezionato === "tutti" || valoreCampo.toLowerCase() === valoreSelezionato.trim().toLowerCase());
+      const valoreCampo = (sp.valore_indicatore_spaziocomune || '').toString().trim().toLowerCase();
+      const matchValore = (valoreSelezionato === "tutti" || valoreCampo === valoreSelezionato);
 
       return matchDisabilita && matchValore;
     });
@@ -831,16 +710,9 @@ function mostraCard() {
   applicaFiltro();
 }
 
-
-
-
-
-
-
 function renderTabellaCompleta(datiGrezzi) {
   const container = document.getElementById('lista-residenze');
 
-  // 1. Distruggi pulitamente la tabella precedente se è già attiva
   if ($.fn.DataTable.isDataTable('#tabellaCompleta')) {
     $('#tabellaCompleta').DataTable().destroy();
     $('#tabellaCompleta').empty();
@@ -851,11 +723,9 @@ function renderTabellaCompleta(datiGrezzi) {
     return;
   }
 
-  // 2. Costruzione della struttura HTML della tabella
   let html = `<table id="tabellaCompleta" class="display nowrap" style="width:100%"><thead><tr>`;
   const colonne = Object.keys(datiGrezzi[0]);
   
-  // Campi tecnici da nascondere visivamente
   const campiDaNascondere = ['id_citta', 'id_residenza', 'id_piano', 'id_stanza', 'id_spaziocomune'];
 
   colonne.forEach(c => {
@@ -878,12 +748,10 @@ function renderTabellaCompleta(datiGrezzi) {
   html += '</tbody></table>';
   container.innerHTML = html;
 
-  // 3. Calcolo degli indici delle colonne da nascondere
   const indiciDaNascondere = colonne
     .map((nomeColonna, index) => campiDaNascondere.includes(nomeColonna) ? index : -1)
     .filter(index => index !== -1);
 
-  // 4. Inizializzazione DataTables con Pulsanti + Cerca + "Mostra X righe" a destra
   $('#tabellaCompleta').DataTable({
     scrollX: true,
     autoWidth: false,
@@ -895,7 +763,6 @@ function renderTabellaCompleta(datiGrezzi) {
         searchable: true
       }
     ],
-    // "B" = Pulsanti Export, "fl" = Cerca seguito da Mostra X righe a destra
     dom: '<"dt-top-container"B<"dt-search-length"fl>>rt<"dt-bottom-container"ip>',
     buttons: [
       {
@@ -929,22 +796,6 @@ function renderTabellaCompleta(datiGrezzi) {
     }
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Avvio applicazione
 inizializzaPagina();

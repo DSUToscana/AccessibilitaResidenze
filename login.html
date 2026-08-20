@@ -19,6 +19,7 @@
       justify-content:center;
       align-items:center;
       height:100vh;
+      margin: 0;
     }
 
     .box{
@@ -49,6 +50,26 @@
 
     #message{
       min-height:20px;
+      font-size: 0.9em;
+    }
+
+    .forgot-pwd-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .forgot-pwd-link {
+      color: #9ca3af;
+      font-size: 0.8em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .forgot-pwd-link:hover {
+      color: #3b82f6;
+      text-decoration: underline;
     }
 
   </style>
@@ -57,99 +78,231 @@
 
   <div class="box">
 
-    <h1>Login</h1>
+    <!-- FORM DI LOGIN -->
+    <div id="formLogin" style="display: flex; flex-direction: column; gap: 12px;">
+      <h1>Login</h1>
 
-    <input
-      type="email"
-      id="email"
-      placeholder="Email"
-    >
+      <input
+        type="email"
+        id="email"
+        placeholder="Email"
+      >
 
-    <input
-      type="password"
-      id="password"
-      placeholder="Password"
-    >
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+      >
 
-    <button id="loginBtn">
-      Accedi
-    </button>
+      <button id="loginBtn">
+        Accedi
+      </button>
+
+      <div class="forgot-pwd-container">
+        <a id="showChangePwdBtn" class="forgot-pwd-link">🔑 Cambia Password</a>
+      </div>
+    </div>
+
+    <!-- FORM DI CAMBIO PASSWORD (Nascosto all'inizio) -->
+    <div id="formChangePwd" style="display: none; flex-direction: column; gap: 12px;">
+      <h1>Cambia Password</h1>
+
+      <input
+        type="email"
+        id="changeEmail"
+        placeholder="Email"
+      >
+
+      <input
+        type="password"
+        id="oldPassword"
+        placeholder="Vecchia Password"
+      >
+
+      <input
+        type="password"
+        id="newPassword"
+        placeholder="Nuova Password"
+      >
+
+      <input
+        type="password"
+        id="confirmNewPassword"
+        placeholder="Conferma Nuova Password"
+      >
+
+      <button id="changePwdBtn">
+        Conferma Cambio Password
+      </button>
+
+      <div class="forgot-pwd-container">
+        <a id="showLoginBtn" class="forgot-pwd-link">⬅️ Torna al Login</a>
+      </div>
+    </div>
 
     <div id="message"></div>
 
   </div>
-  
-  
-  
 
   <script>
 
-    // =========================
-    // DATI SUPABASE
-    // =========================
+  // =========================
+  // DATI SUPABASE
+  // =========================
 
-    const SUPABASE_URL =
-      "https://hrqztgddqmwtljafqahn.supabase.co";
+  const SUPABASE_URL = "https://hrqztgddqmwtljafqahn.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
 
-    const SUPABASE_KEY =
-      "sb_publishable_UvgKn-USEKWR-VxnvG_vDA_k55Q15mq";
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // =========================
+  // SWITCH VISTE FORM
+  // =========================
 
-    // =========================
-    // CLIENT
-    // =========================
+  const formLogin = document.getElementById("formLogin");
+  const formChangePwd = document.getElementById("formChangePwd");
+  const message = document.getElementById("message");
 
-    const client = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+  document.getElementById("showChangePwdBtn").addEventListener("click", () => {
+    formLogin.style.display = "none";
+    formChangePwd.style.display = "flex";
+    message.innerHTML = "";
+  });
 
+  document.getElementById("showLoginBtn").addEventListener("click", () => {
+    formChangePwd.style.display = "none";
+    formLogin.style.display = "flex";
+    message.innerHTML = "";
+  });
 
-    // =========================
-    // LOGIN
-    // =========================
+  // =========================
+  // LOGIN
+  // =========================
 
-    document
-      .getElementById("loginBtn")
-      .addEventListener("click", async () => {
+  document.getElementById("loginBtn").addEventListener("click", async () => {
 
-        const email =
-          document.getElementById("email").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-        const password =
-          document.getElementById("password").value;
+    message.style.color = "white";
+    message.innerHTML = "Autenticazione in corso...";
 
-        const message =
-          document.getElementById("message");
+    const { data, error } = await client.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
 
+    if (error) {
+      message.style.color = "#f87171";
+      message.innerHTML = "Errore: " + error.message;
+    } else {
+      message.innerHTML = "Verifica ruoli in corso...";
 
-        const { data, error } =
-          await client.auth.signInWithPassword({
+      const { data: operatore, error: operatoreError } = await client
+        .from("operatori")
+        .select("admin")
+        .eq("mail", email)
+        .single();
 
-            email: email,
-            password: password
-
-          });
-
-
-        if(error){
-
-          message.innerHTML =
-            "Errore: " + error.message;
-
-        }else{
-
-          message.innerHTML =
-            "Login effettuato!";
-
-          console.log(data);
-
-          // redirect
-          // window.location.href = "dashboard.html";
-		  window.location.href = "gestione.html";
+      if (operatoreError) {
+        console.error("Errore recupero dati operatore:", operatoreError);
+        message.style.color = "#f87171";
+        message.innerHTML = "Errore durante la verifica dei permessi.";
+      } else {
+        if (operatore && operatore.admin === true) {
+          window.location.href = "index.html";
+        } else {
+          window.location.href = "gestione.html";
         }
+      }
+    }
+  });
 
-      });
+  // =========================
+  // CAMBIO PASSWORD
+  // =========================
+
+  document.getElementById("changePwdBtn").addEventListener("click", async () => {
+
+    const email = document.getElementById("changeEmail").value.trim();
+    const oldPassword = document.getElementById("oldPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmNewPassword = document.getElementById("confirmNewPassword").value;
+
+    if (!email || !oldPassword || !newPassword || !confirmNewPassword) {
+      message.style.color = "#f87171";
+      message.innerHTML = "Compila tutti i campi!";
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      message.style.color = "#f87171";
+      message.innerHTML = "Le due nuove password non coincidono!";
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      message.style.color = "#f87171";
+      message.innerHTML = "La nuova password deve contenere almeno 6 caratteri.";
+      return;
+    }
+
+    message.style.color = "white";
+    message.innerHTML = "Verifica credenziali attuali...";
+
+    // 1. Verifica la vecchia password effettuando un login di prova
+    const { data: authData, error: authError } = await client.auth.signInWithPassword({
+      email: email,
+      password: oldPassword
+    });
+
+    if (authError) {
+      message.style.color = "#f87171";
+      message.innerHTML = "Vecchia password o email non corretta!";
+      return;
+    }
+
+    message.innerHTML = "Aggiornamento password in corso...";
+
+    // 2. Aggiorna la password in Supabase Auth
+    const { error: updateAuthError } = await client.auth.updateUser({
+      password: newPassword
+    });
+
+    if (updateAuthError) {
+      message.style.color = "#f87171";
+      message.innerHTML = "Errore Supabase Auth: " + updateAuthError.message;
+      return;
+    }
+
+    // 3. Aggiorna la password nella tabella 'operatori' (campo 'password')
+    const { error: dbError } = await client
+      .from("operatori")
+      .update({ password: newPassword })
+      .eq("mail", email);
+
+    if (dbError) {
+      console.error("Errore aggiornamento DB operatore:", dbError);
+      message.style.color = "#f87171";
+      message.innerHTML = "Password cambiata su Auth, ma errore nell'aggiornamento della tabella operatori.";
+    } else {
+      message.style.color = "#4ade80";
+      message.innerHTML = "✅ Password aggiornata con successo! Ora puoi accedere.";
+      
+      // Reset campi form
+      document.getElementById("oldPassword").value = "";
+      document.getElementById("newPassword").value = "";
+      document.getElementById("confirmNewPassword").value = "";
+
+      // Ritorno automatico al login dopo 2 secondi
+      setTimeout(() => {
+        formChangePwd.style.display = "none";
+        formLogin.style.display = "flex";
+        message.innerHTML = "";
+      }, 2000);
+    }
+
+  });
 
   </script>
 
