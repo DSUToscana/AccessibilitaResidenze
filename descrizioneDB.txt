@@ -1,0 +1,15 @@
+ho:
+tabella indicatori_facilitazioni, con campi id, area, ambito, requisito, caratteristiche, note, disabilita
+tabella citta, con campi id e citta;
+tabella indicatori_piani, con campi id e piano;
+
+tabella residenze con id, id_citta (chiave esterna su citta) e altri campi;
+tabella scheda_residenze con id, id_residenza (chiave esterna su residenze) e altri campi;
+
+tabella livelli con id, id_residenza (chiave esterna su residenze), id_piano (chiave esterna su indicatori_piani)  e altri campi;
+
+tabella stanze con id, id_livello (chiave esterna su livelli) , stanza, bagno(booleano), nota;
+tabella scheda_stanze con id, id_stanza (chiave esterna su stanze), id_indicatore_facilitazioni (chiave esterna su indicatori_facilitazioni), value e nota;
+
+tabella spazicomuni con id, id_livello (chiave esterna su livelli) , spaziocomune, nota;
+tabella scheda_spazicomuni con id, id_spaziocomune (chiave esterna su spazicomuni), id_indicatore_facilitazioni (chiave esterna su indicatori_facilitazioni), value e nota;
