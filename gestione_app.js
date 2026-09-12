@@ -717,7 +717,7 @@ function aggiornaTestoComuniSummary() {
 // 4. RENDERING E GESTIONE PIANI / STANZE
 // ==================================================
 
-async function generaRigheLivelli(livelliSalvati = []) {
+async function OLD_generaRigheLivelli(livelliSalvati = []) {
   // Se non abbiamo ancora scaricato i piani dal DB, li scarichiamo ora
   if (!listaPianiOpzioni || listaPianiOpzioni.length === 0) {
     await caricaOpzioniPiani();
@@ -787,7 +787,121 @@ async function generaRigheLivelli(livelliSalvati = []) {
   calcolaTotaliLivelli();
 }
 
+async function generaRigheLivelli(livelliSalvati = []) {
+  // Se non abbiamo ancora scaricato i piani dal DB, li scarichiamo ora
+  if (!listaPianiOpzioni || listaPianiOpzioni.length === 0) {
+    await caricaOpzioniPiani();
+  }
 
+  const inputLivelli = document.getElementById('input-livelli');
+  const numLivelli = inputLivelli ? (parseInt(inputLivelli.value, 10) || 1) : 1;
+  const tbody = document.getElementById('corpo-tabella-livelli');
+  if (!tbody) return;
+
+  // ------------------------------------------------------------------
+  // 1. PRIMA DI SVUOTARE: Catturiamo lo stato digitato nel DOM
+  // ------------------------------------------------------------------
+  const statoCorrenteTR = tbody.querySelectorAll('tr');
+  const bozzaLivelliInMemoria = [];
+
+  statoCorrenteTR.forEach(tr => {
+    const i = parseInt(tr.dataset.livello, 10);
+    const selectPiano = tr.querySelector('.livello-piano');
+    const inputRampa = tr.querySelector('.livello-rampa');
+    const selectAccessibile = tr.querySelector('.livello-accessibile');
+    const inputStanze = tr.querySelector('.livello-stanze');
+    const inputStanzeAcc = tr.querySelector('.livello-stanze-acc');
+    const inputSpaziComuni = tr.querySelector('.livello-spazi-comuni');
+    const inputNota = tr.querySelector('.livello-nota');
+
+    bozzaLivelliInMemoria[i] = {
+      id: tr.dataset.idLivelloDb ? parseInt(tr.dataset.idLivelloDb, 10) : undefined,
+      livello: i,
+      id_piano: selectPiano ? (parseInt(selectPiano.value, 10) || null) : null,
+      piano: selectPiano ? (parseInt(selectPiano.value, 10) || null) : null,
+      rampa: inputRampa ? inputRampa.checked : false,
+      accessibile: selectAccessibile ? selectAccessibile.value : 'Sì',
+      num_camere: inputStanze ? (parseInt(inputStanze.value, 10) || 0) : 0,
+      num_camere_accessibili: inputStanzeAcc ? (parseInt(inputStanzeAcc.value, 10) || 0) : 0,
+      num_spazi_comuni: inputSpaziComuni ? (parseInt(inputSpaziComuni.value, 10) || 0) : 0,
+      nota: inputNota ? inputNota.value : ''
+    };
+  });
+
+  // ------------------------------------------------------------------
+  // 2. ORA POSSIAMO SVUOTARE LA TABELLA
+  // ------------------------------------------------------------------
+  tbody.innerHTML = '';
+
+  for (let i = 1; i <= numLivelli; i++) {
+    // Priorità dati:
+    // 1. Bozza attualmente digitata a schermo (bozzaLivelliInMemoria)
+    // 2. Dati passati dal DB (livelliSalvati)
+    // 3. Oggetto vuoto (nuovo livello)
+    const datiBozza = bozzaLivelliInMemoria[i];
+    const datiDB = livelliSalvati.find(p => p.livello === i) || livelliSalvati[i - 1];
+    
+    const datiLivello = datiBozza || datiDB || {};
+
+    const tr = document.createElement('tr');
+    tr.dataset.livello = i;
+    if (datiLivello.id) tr.dataset.idLivelloDb = datiLivello.id;
+
+    // Generiamo le opzioni con value = id_piano
+    let opzioniPianiHTML = `<option value="">-- Seleziona Piano --</option>`;
+    listaPianiOpzioni.forEach(item => {
+      const isSelected = (
+        datiLivello.piano === item.id || 
+        datiLivello.id_piano === item.id || 
+        datiLivello.piano === item.piano
+      ) ? 'selected' : '';
+
+      opzioniPianiHTML += `<option value="${item.id}" ${isSelected}>${item.piano}</option>`;
+    });
+
+    tr.innerHTML = `
+      <td><strong>Livello ${i}</strong></td>
+      
+      <td>
+        <select class="livello-piano" onchange="aggiornaOpzioniPianiDisponibili(); if(typeof rigeneraDettagliStanze === 'function') rigeneraDettagliStanze(); if(typeof rigeneraDettagliSpaziComuni === 'function') rigeneraDettagliSpaziComuni();">
+          ${opzioniPianiHTML}
+        </select>
+      </td>
+
+      <td><input type="checkbox" class="livello-rampa" ${datiLivello.rampa ? 'checked' : ''}></td>
+      
+      <td>
+        <select class="livello-accessibile">
+          <option value="Sì" ${datiLivello.accessibile === 'Sì' ? 'selected' : ''}>Sì</option>
+          <option value="No" ${datiLivello.accessibile === 'No' ? 'selected' : ''}>No</option>
+          <option value="Parzialmente" ${datiLivello.accessibile === 'Parzialmente' ? 'selected' : ''}>Parzialmente</option>
+        </select>
+      </td>
+      
+      <td><input type="number" class="livello-stanze" min="0" value="${datiLivello.num_camere ?? 0}" oninput="calcolaTotaliLivelli()"></td>
+      <td><input type="number" class="livello-stanze-acc" min="0" value="${datiLivello.num_camere_accessibili ?? 0}" oninput="calcolaTotaliLivelli()" onchange="if(typeof rigeneraDettagliStanze === 'function') rigeneraDettagliStanze();"></td>
+      <td><input type="number" class="livello-spazi-comuni" min="0" value="${datiLivello.num_spazi_comuni ?? 0}" oninput="calcolaTotaliLivelli()" onchange="if(typeof rigeneraDettagliSpaziComuni === 'function') rigeneraDettagliSpaziComuni();"></td>
+      <td><input type="text" class="livello-nota" value="${datiLivello.nota || ''}" placeholder="Eventuali note..."></td>
+    `;
+
+    tbody.appendChild(tr);
+  }
+
+  // ------------------------------------------------------------------
+  // 3. AGGIORNA LA MEMORIA GLOBALE E RIGENERA LE SCHEDE
+  // ------------------------------------------------------------------
+  // Sincronizziamo anche la variabile globale livelliCaricatiInMemoria per i salvataggi futuri
+  livelliCaricatiInMemoria = Array.from({ length: numLivelli }, (_, index) => {
+    const k = index + 1;
+    return bozzaLivelliInMemoria[k] || livelliSalvati.find(p => p.livello === k) || { livello: k };
+  });
+
+  if (typeof rigeneraDettagliStanze === 'function') rigeneraDettagliStanze();
+  if (typeof rigeneraDettagliSpaziComuni === 'function') rigeneraDettagliSpaziComuni();
+  
+  aggiornaOpzioniPianiDisponibili();
+  calcolaTotaliLivelli();
+}
 
 
 // ==================================================
