@@ -1,7 +1,8 @@
 // ==================================================
 // 1. STATO GLOBALE
 // ==================================================
-let alberoIndicatori = {};
+let alberoIndicatoriStanze = {};
+let alberoIndicatoriComuni = {};
 
 // Palette di colori pastello per livello
 const paletteLivelli = [
@@ -177,7 +178,8 @@ async function caricaOpzioniPiani() {
 
 
 
-async function caricaDatiResidenzaSelezionata() {
+async function caricaDatiResidenzaSelezionataOLD() {
+
       const idResidenza = document.getElementById('select-residenza').value;
       const formDati = document.getElementById('form-dati-scheda');
       
@@ -245,6 +247,7 @@ async function caricaDatiResidenzaSelezionata() {
 	  document.getElementById('check-montascale').checked = false;
 	  document.getElementById('check-montapersone').checked = false;
       document.getElementById('check-rampa').checked = false;
+	  document.getElementById('input-num-addetti-emergenza').value = 0;
 	  document.getElementById('input-num-ospiti').value = 1;
 	  document.getElementById('input-num-stanze').value = 1;
 	  document.getElementById('input-num-stanze-disabili').value = 0;
@@ -253,7 +256,7 @@ async function caricaDatiResidenzaSelezionata() {
 
       const { data: schedaData, error: schedaError } = await clientSupabase
         .from('scheda_residenze')
-        .select('id, id_residenza, last_update, mensa, ascensore, montascale, montapersone, rampa, num_ospiti,num_stanze, num_stanze_disabili, num_spazi_comuni, num_livelli, portineria')
+        .select('id, id_residenza, last_update, mensa, ascensore, montascale, montapersone, rampa,num_addetti_emergenze_disabili, num_ospiti,num_stanze, num_stanze_disabili, num_spazi_comuni, num_livelli, portineria')
         .eq('id_residenza', idResidenza);
 
       if (schedaError) return mostraMessaggio("Errore caricamento scheda: " + schedaError.message, true);
@@ -299,6 +302,7 @@ async function caricaDatiResidenzaSelezionata() {
 		document.getElementById('check-montascale').checked = scheda.montascale;
 		document.getElementById('check-montapersone').checked = scheda.montapersone;
         document.getElementById('check-rampa').checked = scheda.rampa;
+		document.getElementById('input-num-addetti-emergenza').value = scheda.num_addetti_emergenze_disabili || 0;
 		document.getElementById('input-num-ospiti').value = scheda.num_ospiti || 1;
 		document.getElementById('input-num-stanze').value = scheda.num_stanze || 1;
 		document.getElementById('input-num-stanze-disabili').value = scheda.num_stanze_disabili || 0;
@@ -365,7 +369,162 @@ async function caricaDatiResidenzaSelezionata() {
 }
 	
 	
-	
+async function caricaDatiResidenzaSelezionata() {
+  // 1. Resetta le variabili globali in memoria
+  livelliCaricatiInMemoria = [];
+  if (typeof stanzeCaricateInMemoria !== 'undefined') stanzeCaricateInMemoria = [];
+  if (typeof spaziComuniCaricatiInMemoria !== 'undefined') spaziComuniCaricatiInMemoria = [];
+
+  // 2. Resetta e svuota TUTTI i contenitori DOM (Livelli, Stanze e Spazi Comuni)
+  const tbody = document.getElementById('corpo-tabella-livelli');
+  if (tbody) tbody.innerHTML = '';
+
+  const contenitoreStanze = document.getElementById('contenitore-stanze'); // Assegna l'ID reale del tuo contenitore stanze
+  if (contenitoreStanze) contenitoreStanze.innerHTML = '';
+
+  const contenitoreSpazi = document.getElementById('contenitore-spazi-comuni'); // Assegna l'ID reale del tuo contenitore spazi
+  if (contenitoreSpazi) contenitoreSpazi.innerHTML = '';
+
+  // Procedo con il caricamento
+  const idResidenza = document.getElementById('select-residenza').value;
+  const formDati = document.getElementById('form-dati-scheda');
+  
+  if (!idResidenza) {
+    document.getElementById('box-last-update').style.display = "none";
+    document.getElementById('box-telefono').style.display = "none";
+    document.getElementById('box-indirizzo').style.display = "none";
+    formDati.style.display = "none";
+    return;
+  }
+
+  const boxTelefono = document.getElementById('box-telefono');
+  const testoTelefono = document.getElementById('testo-telefono');
+  const residenzaSelezionata = tutteLeResidenze.find(r => r.id === parseInt(idResidenza));
+  
+  if (residenzaSelezionata && residenzaSelezionata.telefono) {
+    const numTel = residenzaSelezionata.telefono.trim();
+    testoTelefono.innerHTML = `<a href="tel:${numTel}" style="color: #0284c7; text-decoration: none;">${numTel} 📞 </a>`;
+    boxTelefono.style.display = "block";
+  } else {
+    testoTelefono.innerHTML = `<span style="color: #666; font-style: italic;">Nessun telefono registrato</span>`;
+    boxTelefono.style.display = "block";
+  }
+
+  // Indirizzo & Maps
+  const boxIndirizzo = document.querySelector('.address-box');
+  const spanIndirizzo = document.getElementById('box-indirizzo');
+  const mapsButton = document.getElementById('mapsButton');
+
+  if (residenzaSelezionata && residenzaSelezionata.indirizzo && residenzaSelezionata.cap && residenzaSelezionata.localita) {
+    const via = encodeURIComponent(residenzaSelezionata.indirizzo.trim());
+    const cap = encodeURIComponent(residenzaSelezionata.cap.trim());
+    const localita = encodeURIComponent(residenzaSelezionata.localita.trim());
+
+    spanIndirizzo.textContent = residenzaSelezionata.indirizzo.trim() + ', ' + residenzaSelezionata.cap.trim() + ', ' + residenzaSelezionata.localita.trim();
+    const indirizzoCompleto = via + ',' + cap + ',' + localita;
+    const indirizzoFormattato = indirizzoCompleto.trim().replace(/\s+/g, '+');
+    mapsButton.href = `https://www.google.com/maps/search/?api=1&query=${indirizzoFormattato}`;
+    boxIndirizzo.style.display = "block";
+  } else {
+    spanIndirizzo.innerHTML = `<span style="color: #666; font-style: italic;">Nessun indirizzo registrato</span>`;
+    mapsButton.href = "#";
+  }
+
+  schedaEsistenteId = null;
+  livelliCaricatiInMemoria = [];
+
+  // Reset form di base
+  document.getElementById('check-mensa').checked = false;
+  document.getElementById('check-ascensore').checked = false;
+  document.getElementById('check-montascale').checked = false;
+  document.getElementById('check-montapersone').checked = false;
+  document.getElementById('check-rampa').checked = false;
+  document.getElementById('input-num-addetti-emergenza').value = 0;
+  document.getElementById('input-num-ospiti').value = 1;
+  document.getElementById('input-num-stanze').value = 1;
+  document.getElementById('input-num-stanze-disabili').value = 0;
+  document.getElementById('input-num-spazi-comuni').value = 0;
+  document.getElementById('input-livelli').value = 1;
+
+  const { data: schedaData, error: schedaError } = await clientSupabase
+    .from('scheda_residenze')
+    .select('id, id_residenza, last_update, mensa, ascensore, montascale, montapersone, rampa, num_addetti_emergenze_disabili, num_ospiti, num_stanze, num_stanze_disabili, num_spazi_comuni, num_livelli, portineria')
+    .eq('id_residenza', idResidenza);
+
+  if (schedaError) return mostraMessaggio("Errore caricamento scheda: " + schedaError.message, true);
+
+  formDati.style.display = "block";
+
+  if (schedaData && schedaData.length > 0) {
+    const scheda = schedaData[0];
+    schedaEsistenteId = scheda.id;
+
+    if (scheda.last_update) {
+      const date = new Date(scheda.last_update);
+      const data_leggibile = new Intl.DateTimeFormat('it-IT', {
+        day: '2-digit', month: '2-digit', year: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date).replace(',', '');
+      
+      document.getElementById('testo-last-update').innerHTML = `<span style="color: #666; font-style: italic;">${data_leggibile} </span>`;
+    } else {
+      document.getElementById('testo-last-update').innerHTML = `<span style="color: #666; font-style: italic;">Nessuna informazione registrata</span>`;
+    }
+
+    document.getElementById('box-last-update').style.display = "block";
+    document.getElementById('select-portineria').value = scheda.portineria || '';
+    document.getElementById('check-mensa').checked = scheda.mensa;
+    document.getElementById('check-ascensore').checked = scheda.ascensore;
+    document.getElementById('check-montascale').checked = scheda.montascale;
+    document.getElementById('check-montapersone').checked = scheda.montapersone;
+    document.getElementById('check-rampa').checked = scheda.rampa;
+    document.getElementById('input-num-addetti-emergenza').value = scheda.num_addetti_emergenze_disabili || 0;
+    document.getElementById('input-num-ospiti').value = scheda.num_ospiti || 1;
+    document.getElementById('input-num-stanze').value = scheda.num_stanze || 1;
+    document.getElementById('input-num-stanze-disabili').value = scheda.num_stanze_disabili || 0;
+    document.getElementById('input-num-spazi-comuni').value = scheda.num_spazi_comuni || 0;
+    document.getElementById('input-livelli').value = scheda.num_livelli || 1;
+
+    // Carica Livelli
+    const { data: livelliData, error: livelliError } = await clientSupabase
+      .from('livelli')
+      .select('*')
+      .eq('id_residenza', idResidenza)
+      .order('id_piano');
+
+    if (livelliError) console.warn("Errore caricamento livelli correlati:", livelliError.message);
+
+    livelliCaricatiInMemoria = livelliData || [];
+    generaRigheLivelli(livelliCaricatiInMemoria);
+    calcolaTotaliLivelli(); 
+  } else {
+    generaRigheLivelli([]);
+    calcolaTotaliLivelli(); 
+  }
+
+  // Prendi gli ID dei livelli inseriti/aggiornati
+  const arrayIdLivelli = livelliCaricatiInMemoria.map(p => p.id);
+
+  if (arrayIdLivelli.length > 0) {
+    // 2. Carica e disegna le Stanze
+    const mappaStanzePerLivello = await caricaDatiStanzeConValori(arrayIdLivelli);
+    
+    // NOTA: Qui devi chiamare la funzione che disegna le stanze nell'HTML (es. renderStanze / generaCardStanze):
+    if (typeof disegnaStanzeInPagina === 'function') {
+      disegnaStanzeInPagina(mappaStanzePerLivello);
+    }
+
+    // 3. Carica e disegna gli Spazi Comuni
+    const mappaSpaziComuniPerLivello = await caricaDatiSpaziComuniConValori(arrayIdLivelli);
+    
+    // NOTA: Qui devi chiamare la funzione che disegna gli spazi comuni nell'HTML:
+    if (typeof disegnaSpaziComuniInPagina === 'function') {
+      disegnaSpaziComuniInPagina(mappaSpaziComuniPerLivello);
+    }
+  }
+
+  aggiornaOpzioniPianiDisponibili();
+}	
 	
 
 function calcolaTotaliLivelli() {
@@ -416,7 +575,7 @@ function calcolaTotaliLivelli() {
 
 
 
-async function salvaTutto() {
+async function salvaTuttoOLD() {
   // --------------------------------------------------
   // 1. SALVATAGGIO SCHEDA RESIDENZE
   // --------------------------------------------------
@@ -426,6 +585,7 @@ async function salvaTutto() {
   const montascale = document.getElementById('check-montascale').checked;
   const montapersone = document.getElementById('check-montapersone').checked;
   const rampa = document.getElementById('check-rampa').checked;
+  const num_addetti_emergenze_disabili = parseInt(document.getElementById('input-num-addetti-emergenza').value) || 0;
   const num_ospiti = parseInt(document.getElementById('input-num-ospiti').value) || 0;
   const num_stanze = parseInt(document.getElementById('input-num-stanze').value) || 0;
   const num_stanze_disabili = parseInt(document.getElementById('input-num-stanze-disabili').value) || 0;
@@ -447,6 +607,7 @@ async function salvaTutto() {
     montascale: montascale, 
     montapersone: montapersone, 
     rampa: rampa, 
+    num_addetti_emergenze_disabili: num_addetti_emergenze_disabili,
     num_ospiti: num_ospiti,
     num_stanze: num_stanze,
     num_stanze_disabili: num_stanze_disabili,
@@ -558,6 +719,213 @@ async function salvaTutto() {
 
     const okSpaziComuni = await salvaSpaziComuniESchede(mappaLivelliId);
 
+    if (!okSpaziComuni) {
+      throw new Error("Si è verificato un errore durante il salvataggio degli spazi comuni o delle relative schede.");
+    }
+
+    mostraMessaggio("Aggiornamento effettuato con successo!", false);
+    await caricaDatiResidenzaSelezionata();
+
+  } catch (err) {
+    mostraMessaggio("Errore durante il salvataggio: " + err.message, true);
+    console.error("Dettaglio Errore:", err);
+  }
+}
+
+
+
+async function salvaTutto() {
+  // --------------------------------------------------
+  // 1. SALVATAGGIO SCHEDA RESIDENZE
+  // --------------------------------------------------
+  const idResidenzaVal = document.getElementById('select-residenza').value;
+  const mensa = document.getElementById('check-mensa').checked;
+  const ascensore = document.getElementById('check-ascensore').checked;
+  const montascale = document.getElementById('check-montascale').checked;
+  const montapersone = document.getElementById('check-montapersone').checked;
+  const rampa = document.getElementById('check-rampa').checked;
+  const num_addetti_emergenze_disabili = parseInt(document.getElementById('input-num-addetti-emergenza').value) || 0;
+  const num_ospiti = parseInt(document.getElementById('input-num-ospiti').value) || 0;
+  const num_stanze = parseInt(document.getElementById('input-num-stanze').value) || 0;
+  const num_stanze_disabili = parseInt(document.getElementById('input-num-stanze-disabili').value) || 0;
+  const num_spazi_comuni = parseInt(document.getElementById('input-num-spazi-comuni').value) || 0;
+  const num_livelli = parseInt(document.getElementById('input-livelli').value) || 0;
+  const portineria = document.getElementById('select-portineria').value;
+
+  if (!idResidenzaVal) {
+    return mostraMessaggio("Seleziona prima una residenza.", true);
+  }
+
+  const idResidenzaId = parseInt(idResidenzaVal);
+
+  const datiSchedaResidenze = { 
+    id_residenza: idResidenzaId, 
+    portineria: portineria,
+    mensa: mensa, 
+    ascensore: ascensore, 
+    montascale: montascale, 
+    montapersone: montapersone, 
+    rampa: rampa, 
+    num_addetti_emergenze_disabili: num_addetti_emergenze_disabili,
+    num_ospiti: num_ospiti,
+    num_stanze: num_stanze,
+    num_stanze_disabili: num_stanze_disabili,
+    num_spazi_comuni: num_spazi_comuni,
+    num_livelli: num_livelli 
+  };
+
+  try {
+    // =========================================================================
+    // CANCELLAZIONE PREVENTIVA TOTALE
+    // =========================================================================
+    console.log("Inizio pulizia totale per id_residenza:", idResidenzaId);
+
+    // Recupera gli ID dei livelli correnti per eliminare a cascata
+    const { data: listaLivelli, error: errFetchLivelli } = await clientSupabase
+      .from('livelli')
+      .select('id')
+      .eq('id_residenza', idResidenzaId);
+
+    if (errFetchLivelli) throw errFetchLivelli;
+
+    if (listaLivelli && listaLivelli.length > 0) {
+      const idsLivelli = listaLivelli.map(l => l.id);
+
+      // 1. Spazi comuni & schede spazi comuni
+      const { data: listaSpazi, error: errFetchSpazi } = await clientSupabase
+        .from('spazicomuni')
+        .select('id')
+        .in('id_livello', idsLivelli);
+
+      if (errFetchSpazi) throw errFetchSpazi;
+
+      if (listaSpazi && listaSpazi.length > 0) {
+        const idsSpazi = listaSpazi.map(sc => sc.id);
+        const { error: errDelSchedaSpazi } = await clientSupabase
+          .from('scheda_spazicomuni')
+          .delete()
+          .in('id_spaziocomune', idsSpazi);
+        if (errDelSchedaSpazi) throw errDelSchedaSpazi;
+      }
+
+      const { error: errDelSpazi } = await clientSupabase
+        .from('spazicomuni')
+        .delete()
+        .in('id_livello', idsLivelli);
+      if (errDelSpazi) throw errDelSpazi;
+
+      // 2. Stanze & schede stanze
+      const { data: listaStanze, error: errFetchStanze } = await clientSupabase
+        .from('stanze')
+        .select('id')
+        .in('id_livello', idsLivelli);
+
+      if (errFetchStanze) throw errFetchStanze;
+
+      if (listaStanze && listaStanze.length > 0) {
+        const idsStanze = listaStanze.map(s => s.id);
+        const { error: errDelSchedaStanze } = await clientSupabase
+          .from('scheda_stanze')
+          .delete()
+          .in('id_stanza', idsStanze);
+        if (errDelSchedaStanze) throw errDelSchedaStanze;
+      }
+
+      const { error: errDelStanze } = await clientSupabase
+        .from('stanze')
+        .delete()
+        .in('id_livello', idsLivelli);
+      if (errDelStanze) throw errDelStanze;
+
+      // 3. Livelli
+      const { error: errDelLivelli } = await clientSupabase
+        .from('livelli')
+        .delete()
+        .eq('id_residenza', idResidenzaId);
+      if (errDelLivelli) throw errDelLivelli;
+    }
+
+    console.log("Pulizia completata. Avvio re-inserimento dati...");
+
+    // --------------------------------------------------
+    // SALVATAGGIO/UPDATE SCHEDA RESIDENZE
+    // --------------------------------------------------
+    let idSchedaResidenzeId = null;
+    const { data: schedaVerifica, error: erroreVerifica } = await clientSupabase
+      .from('scheda_residenze')
+      .select('id')
+      .eq('id_residenza', idResidenzaId);
+
+    if (erroreVerifica) throw erroreVerifica;
+
+    if (schedaVerifica && schedaVerifica.length > 0) {
+      idSchedaResidenzeId = schedaVerifica[0].id;
+      const { error: erroreUpdate } = await clientSupabase
+        .from('scheda_residenze')
+        .update(datiSchedaResidenze)
+        .eq('id', idSchedaResidenzeId);
+      if (erroreUpdate) throw erroreUpdate;
+    } else {
+      const { data: nuovaScheda, error: erroreInsert } = await clientSupabase
+        .from('scheda_residenze')
+        .insert(datiSchedaResidenze)
+        .select();
+      if (erroreInsert) throw erroreInsert;
+      idSchedaResidenzeId = nuovaScheda[0].id;
+    }
+
+    if (!idSchedaResidenzeId) throw new Error("ID scheda non valido.");
+
+    // --------------------------------------------------
+    // 2. RE-INSERIMENTO DI TUTTI I LIVELLI
+    // --------------------------------------------------
+    const righeTR = document.querySelectorAll('#corpo-tabella-livelli tr');
+    const mappaLivelliId = {};
+
+    for (const tr of righeTR) {
+      const numeroLivelloCorrente = parseInt(tr.dataset.livello);
+      const selectPianoElem = tr.querySelector('.livello-piano');
+      const valPianoSelect = selectPianoElem ? selectPianoElem.value : null;
+      const idPianoScelto = valPianoSelect ? parseInt(valPianoSelect, 10) : null;
+
+      const datiLivello = {
+        id_residenza: idResidenzaId,
+        id_piano: idPianoScelto,
+        accessibile: tr.querySelector('.livello-accessibile').value,
+        rampa: tr.querySelector('.livello-rampa').checked,
+        num_camere: parseInt(tr.querySelector('.livello-stanze').value) || 0,
+        num_camere_accessibili: parseInt(tr.querySelector('.livello-stanze-acc').value) || 0,
+        num_spazi_comuni: parseInt(tr.querySelector('.livello-spazi-comuni').value) || 0,
+        nota: tr.querySelector('.livello-nota').value
+      };
+
+      // Inseriamo SEMPRE come nuovo record
+      console.log(`Inserimento livello ${numeroLivelloCorrente}...`);
+      const { data: nuovoLivelloInserito, error: errorInsertLivello } = await clientSupabase
+        .from('livelli')
+        .insert(datiLivello)
+        .select();
+
+      if (errorInsertLivello) throw errorInsertLivello;
+
+      // Mappiamo il numero del livello con il nuovo ID appena generato
+      mappaLivelliId[numeroLivelloCorrente] = nuovoLivelloInserito[0].id;
+    }
+
+    // --------------------------------------------------
+    // 3. RE-INSERIMENTO STANZE E SCHEDA_STANZE
+    // --------------------------------------------------
+    console.log("Mappa Livelli generata per stanze:", mappaLivelliId);
+    const okStanze = await salvaStanzeESchede(mappaLivelliId);
+    if (!okStanze) {
+      throw new Error("Si è verificato un errore durante il salvataggio delle stanze o delle relative schede.");
+    }
+
+    // --------------------------------------------------
+    // 4. RE-INSERIMENTO SPAZI COMUNI E SCHEDA_SPAZICOMUNI
+    // --------------------------------------------------
+    console.log("Mappa Livelli generata per spazi comuni:", mappaLivelliId);
+    const okSpaziComuni = await salvaSpaziComuniESchede(mappaLivelliId);
     if (!okSpaziComuni) {
       throw new Error("Si è verificato un errore durante il salvataggio degli spazi comuni o delle relative schede.");
     }

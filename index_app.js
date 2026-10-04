@@ -158,6 +158,7 @@ function assemblaAlberoResidenze(residenzeGrezze, stanzeGrezze, spaziGrezzi) {
         id_citta: riga.id_citta,
         scheda: {
           portineria: riga.portineria,
+		  num_addetti_emergenze_disabili: riga.num_addetti_emergenze_disabili,
           ascensore: riga.ascensore,
           rampa: riga.rampa_struttura,
           montascale: riga.montascale,
@@ -578,6 +579,7 @@ function renderResidenze(residenze) {
         <div><strong>Telefono:</strong> <a href="tel:${residenza.telefono || ''}">${residenza.telefono || 'N/D'} 📞</a></div>
         ${scheda ? `
 		<div><strong>Portineria:</strong> ${scheda.portineria}</div>
+		<div><strong>Addetti Emergenze:</strong> ${scheda.num_addetti_emergenze_disabili}</div>
 		<div><strong>Mensa:</strong> ${formattaBooleano(scheda.mensa)}</div>
 		<div><strong>Ascensore:</strong> ${formattaBooleano(scheda.ascensore)}</div>
 		<div><strong>Montascale:</strong> ${formattaBooleano(scheda.montascale)}</div>

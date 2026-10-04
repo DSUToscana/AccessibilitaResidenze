@@ -1,6 +1,5 @@
 // Helper per aggiornare il dataset quando l'utente rinomina la stanza	
 function aggiornaDatasetStanza(inputEl) {
-
   const nuovoNome = inputEl.value.trim();
   const cardStanza = inputEl.closest('.nodo-stanza');
   if (!cardStanza) return;
@@ -104,7 +103,7 @@ stanzaHeader.innerHTML = `
   stanzaBody.className = 'body-livello';
   stanzaBody.style.cssText = 'display:none; padding:10px; background:#f8fafc;';
 
-  const areeDisponibili = Object.keys(alberoIndicatori || {});
+  const areeDisponibili = Object.keys(alberoIndicatoriStanze || {});
   if (areeDisponibili.length === 0) {
     stanzaBody.innerHTML = `<div style="padding:10px; color:#ef4444; font-style:italic;">Nessun indicatore caricato dal database. Verifica la tabella 'indicatori_facilitazioni' per le stanze.</div>`;
     stanzaCard.appendChild(stanzaHeader);
@@ -161,7 +160,7 @@ stanzaHeader.innerHTML = `
     areaBody.className = 'body-livello';
     areaBody.style.cssText = 'display:none; padding:8px;';
 
-    const ambiti = alberoIndicatori[nomeArea] || {};
+    const ambiti = alberoIndicatoriStanze[nomeArea] || {};
     Object.keys(ambiti).forEach(nomeAmbito => {
       const ambitoCard = document.createElement('div');
       ambitoCard.className = 'nodo-ambito';
@@ -509,7 +508,7 @@ async function rigeneraDettagliStanze() {
 
     containerStanze.innerHTML = '';
 
-    if (!alberoIndicatori || Object.keys(alberoIndicatori).length === 0) {
+    if (!alberoIndicatoriStanze || Object.keys(alberoIndicatoriStanze).length === 0) {
       console.warn("⚠️ Albero indicatori non pronto, tentato ricaricamento...");
       if (typeof caricaIndicatoriStanze === 'function') {
         await caricaIndicatoriStanze();
@@ -708,7 +707,7 @@ async function caricaIndicatoriStanze() {
     }
 
     // Riorganizzazione ad albero: Area -> Ambito -> Array di Requisiti
-    alberoIndicatori = data.reduce((acc, item) => {
+    alberoIndicatoriStanze = data.reduce((acc, item) => {
       const area = item.area || 'Generale';
       const ambito = item.ambito || 'Generale';
 
